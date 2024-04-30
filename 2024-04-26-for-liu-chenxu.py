@@ -519,6 +519,9 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     return model
 
 
+# %% [markdown]
+# ## Meshing rough edge geometries
+
 # %%
 gmsh.initialize()
 
@@ -530,6 +533,9 @@ model = gmsh.model()
 
 # %%
 len(x_rough_dimensionless)
+
+# %% [markdown]
+# Geometries are created dimensionless. Height h given in Debye lengths.
 
 # %%
 model = gmsh_rectangle_with_single_rough_edge(
@@ -600,7 +606,7 @@ with XDMFFile(msh.comm, f"data/meshes/rectangle_with_single_rough_edge_vertical_
     file.write_meshtags(ft, msh.geometry, geometry_xpath=f"/Xdmf/Domain/Grid[@Name='{msh.name}']/Geometry")
 
 # %% [markdown]
-# ## Smooth edges
+# ## Meshing smooth edge geometries
 
 # %%
 gmsh.initialize()
@@ -1086,6 +1092,10 @@ u_dimensionless_interpolated.x.array.shape
 c_H3Op_dimensionless_interpolated = Function(W0, dtype=default_scalar_type)
 c_H3Op_dimensionless_interpolated.interpolate(c_H3Op_function)
 
+# %%
+c_OHm_dimensionless_interpolated = Function(W0, dtype=default_scalar_type)
+c_OHm_dimensionless_interpolated.interpolate(c_OHm_function)
+
 # %% [markdown]
 # ### Plot with pyvista
 
@@ -1154,14 +1164,110 @@ plotter.camera.zoom(20)
 # %%
 plotter.show()
 
+# %%
+grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
+
+# %%
+grid.point_data["c_OHm"] = c_OHm_dimensionless_interpolated.x.array.real
+grid.set_active_scalars("c_OHm")
+
+# %%
+plotter = pyvista.Plotter()
+plotter.add_mesh(grid, show_edges=False)
+plotter.view_xy()
+
+# %%
+plotter.camera.zoom(20)
+
+# %%
+plotter.show()
+
 # %% [markdown]
-# ## Integrations
+# ## Surface integrals
+
+# %% [markdown]
+# ### Surface excess in 1d case
+
+# %%
+c
+
+# %%
+z
+
+# %%
+delta_u
+
+# %%
+debye_length
+
+# %%
+L = 10*debye_length
+
+# %%
+L
+
+# %%
+pnp_1d = PoissonNernstPlanckSystemFEniCSx(c=c, z=z, delta_u=delta_u, L=L)
+
+# %%
+pnp_1d.use_standard_interface_bc()
+
+# %%
+potential_ref_unitless, c_ref_unitless, _ = pnp_1d.solve()
+
+# %%
+c_H3Op_ref_unitless = c_ref_unitless[0,:]
+c_OHm_ref_unitless = c_ref_unitless[1,:]
+
+# %%
+x_ref_unitless = pnp_1d.grid_dimensionless
+
+# %%
+plt.plot(x_ref_unitless, c_H3Op_ref_unitless)
+plt.plot(x_ref_unitless, c_OHm_ref_unitless)
+
+# %%
+plt.plot(x_ref_unitless, c_H3Op_ref_unitless-1)
+plt.plot(x_ref_unitless, c_OHm_ref_unitless-1)
+
+# %%
+N_excess_H3Op_ref = np.trapz(c_H3Op_ref_unitless-1., x_ref_unitless)
+
+# %%
+N_excess_OHm_ref = np.trapz(c_OHm_ref_unitless-1., x_ref_unitless)
+
+# %%
+N_excess_H3Op_ref
+
+# %%
+N_excess_OHm_ref
+
+# %%
+dx = np.mean(x_rough_dimensionless[1:]-x_rough_dimensionless[:-1])
+
+# %%
+dx
+
+# %%
+x_rough_dimensionless[0]
+
+# %%
+A_apparent_rough = x_rough_dimensionless[-1] - x_rough_dimensionless[0] + dx
+
+# %%
+A_apparent_rough
+
+# %%
+N_excess_OHm_ref*A_apparent_rough
+
+# %%
+N_excess_H3Op_ref*A_apparent_rough
 
 # %% [markdown]
 # ### Reference amount of species
 
-# %% [raw]
-# reference_concentration_dimensionless = dolfinx.fem.Constant(mesh, default_scalar_type(1))
+# %%
+reference_concentration_dimensionless = dolfinx.fem.Constant(mesh, default_scalar_type(1))
 
 # %%
 N_unit_concentration_expression = dolfinx.fem.form(reference_concentration_dimensionless*ufl.dx)
@@ -1199,6 +1305,9 @@ N_H3Op_excess
 # %%
 N_H3Op_excess / N_unit_concentration  # depletion per volume
 
+# %%
+N_H3Op_excess - N_excess_H3Op_ref*A_apparent_rough
+
 # %% [markdown]
 # ### Amount of OHm
 
@@ -1226,90 +1335,116 @@ N_OHm_excess
 # %%
 N_OHm_excess / N_unit_concentration  # excess per volume
 
+# %%
+# excess compared to flat surface
+N_OHm_excess - N_excess_OHm_ref*A_apparent_rough
+
 # %% [markdown]
-# ## Remaining chaos
+# ## Line integrals
 
 # %%
-# below interpolationdoes not work
+dx = np.mean(x_rough_dimensionless[1:]-x_rough_dimensionless[:-1])
+
+
+y_mean = np.mean(y_rough_dimensionless)
+y_zero_aligned = y_rough_dimensionless - y_mean
+x_zero_aligned = x_rough_dimensionless - x_rough_dimensionless[0] + dx
+
+x0 = 0
+x1 = x_zero_aligned[-1] + dx
 
 # %%
-import ufl
+y_mean
 
 # %%
-H0 = ufl.VectorElement("Discontinuous Lagrange", pnp_2d.mesh.ufl_cell(), 1, dim=pnp_2d.M+1)
+A_apparent_rough
 
 # %%
-gdim = pnp_2d.mesh.geometry.dim
+tol = 0.0001
+y_max = 10
+N_points = 1001
+
+c_ref = 1 # dimensionless
+
+cH3Op_integrals = []
+cOHm_integrals = []
+
+dN_H3Op_integrals = []
+dN_OHm_integrals = []
+
+bb_tree = dolfinx.geometry.bb_tree(mesh, mesh.topology.dim)
+
+for x, y_min in zip(x_zero_aligned, y_zero_aligned):
+    y_grid = np.linspace(y_min + tol, y_max - tol, N_points)
+    # dy = np.mean(y_grid[1:]-y_grid[:-1])
+
+    points = np.zeros((3, N_points))
+    points[0,:] = x
+    points[1,:] = y_grid
+    
+    cells = []
+    points_on_proc = []
+    # Find cells whose bounding-box collide with the the points
+    cell_candidates = dolfinx.geometry.compute_collisions_points(bb_tree, points.T)
+    # Choose one of the cells that contains the point
+    colliding_cells = dolfinx.geometry.compute_colliding_cells(mesh, cell_candidates, points.T)
+    for i, point in enumerate(points.T):
+        if len(colliding_cells.links(i)) > 0:
+            points_on_proc.append(point)
+            cells.append(colliding_cells.links(i)[0])
+
+    points_on_proc = np.array(points_on_proc, dtype=np.float64)
+    cH3Op_values = c_H3Op_dimensionless_interpolated.eval(points_on_proc, cells).T
+    cOHm_values = c_OHm_dimensionless_interpolated.eval(points_on_proc, cells).T
+
+    # line integrals
+    cH3Op_integral = np.trapz(y=cH3Op_values, x=y_grid)
+    cOHm_integral = np.trapz(y=cOHm_values, x=y_grid)
+
+    dN_cH3Op_excess_integral = np.trapz(y=cH3Op_values-c_ref, x=y_grid) - N_excess_H3Op_ref
+    dN_OHm_excess_integral = np.trapz(y=cOHm_values-c_ref, x=y_grid) - N_excess_OHm_ref
+
+    cH3Op_integrals.append(cH3Op_integral)
+    cOHm_integrals.append(cOHm_integral)
+
+    dN_H3Op_integrals.append(dN_cH3Op_excess_integral)
+    dN_OHm_integrals.append(dN_OHm_excess_integral)
 
 # %%
-W0 = FunctionSpace(pnp_2d.mesh, H0)
+plt.plot(x_rough_dimensionless, cH3Op_integrals)
 
 # %%
-w0 = Function(W0, dtype=default_scalar_type)
+plt.plot(x_rough_dimensionless, cOHm_integrals)
 
 # %%
-w0.interpolate(pnp_2d.w)
+plt.plot(x_rough_dimensionless, y_rough_dimensionless)
+plt.plot(x_rough_dimensionless, dN_H3Op_integrals, linestyle=':')
 
 # %%
-u0_dimensionless, c0_H3Op_dimensionless, c0_OHm_dimensionless = w0.split()
+plt.plot(x_rough_dimensionless, y_rough_dimensionless)
+plt.plot(x_rough_dimensionless, dN_OHm_integrals, linestyle=':')
 
 # %%
-u0_dimensionless
+x_rough_dimensionless.shape
 
 # %%
-with XDMFFile(pnp_2d.mesh.comm, "data/solutions/rectangle_with_single_rough_edge_solution_dimesionless.xdmf", "w") as file:
-    file.write_mesh(pnp_2d.mesh)
-    file.write_function(u0_dimensionless)
+subset = slice(100,200)
 
 # %%
-u_dimensionless, c_H3Op_dimensionless, c_OHm_dimensionless = pnp_2d.w.split()
+plt.plot(x_rough_dimensionless[subset], y_rough_dimensionless[subset])
+plt.plot(x_rough_dimensionless[subset], dN_OHm_integrals[subset], linestyle=':')
 
 # %%
-gdim = pnp_2d.mesh.geometry.dim
-U0 = functionspace(pnp_2d.mesh, ("Discontinuous Lagrange", 1, (gdim,)))
-u0 = Function(U0, dtype=default_scalar_type)
-u0.interpolate(u_dimensionless)
+plt.plot(x_rough_dimensionless[subset], y_rough_dimensionless[subset])
+plt.plot(x_rough_dimensionless[subset], dN_H3Op_integrals[subset], linestyle=':')
 
 # %%
-with XDMFFile(pnp_2d.mesh.comm, "data/solutions/rectangle_with_single_rough_edge.xdmf", "w") as file:
-    file.write_mesh(pnp_2d.mesh)
-    file.write_function(u_dimensionless)
-    file.write_function(c_H3Op_dimensionless)
-    file.write_function(c_OHm_dimensionless)
+subset = slice(300,400)
 
 # %%
-with VTXWriter(pnp_2d.mesh.comm, "data/solutions/rectangle_with_single_rough_edge_u_dimensinless.bp", u_dimensionless, "bp4") as f:
-    f.write(0.0)
+plt.plot(x_rough_dimensionless[subset], y_rough_dimensionless[subset])
+plt.plot(x_rough_dimensionless[subset], dN_OHm_integrals[subset], linestyle=':')
 
 # %%
-from dolfinx import plot
-
-# %%
-import pyvista
-
-# %%
-topology, cell_types, geometry = plot.vtk_mesh(pnp_2d.W)
-
-# %%
-grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
-
-# %%
-solution_dimensionless = pnp_2d.w.x.array.reshape(u_geometry.shape).T
-
-# %%
-potential = solution_dimensionless[0, :] * pnp_2d.u_unit  # potential
-concentrations = solution_dimensionless[1:(pnp_2d.M + 1), :] * pnp_2d.c_unit  # concentrations
-
-# %%
-grid.point_data["u"] = potential
-
-# %%
-pyvista.start_xvfb(wait=0.1)
-
-# %%
-u_plotter = pyvista.Plotter()
-u_plotter.add_mesh(grid, show_edges=True)
-u_plotter.view_xy()
-u_plotte
-# if not pyvista.OFF_SCREEN:
-#    u_plotter.show()
+plt.plot(x_rough_dimensionless[subset], y_rough_dimensionless[subset])
+plt.plot(x_rough_dimensionless[subset], dN_H3Op_integrals[subset], linestyle=':')
