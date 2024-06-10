@@ -2,7 +2,7 @@ in_prefix: 'data/profiles'
 out_prefix: 'out'
 
 number_of_species: 2
-reference_conentrations: [1.0e-4, 1.0e-4]  #mM
+reference_concentrations: [1.0e-4, 1.0e-4]  #mM
 number_charges: [1, -1]
 potential_bias: 0.05 # V
 

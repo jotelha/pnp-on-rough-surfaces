@@ -10,8 +10,7 @@ potential_bias = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 
-profile_csv = input.profile_csv
-profile_label = wildcards.profile
+mesh_msh = input.mesh_msh
 
 import logging
 
@@ -24,7 +23,7 @@ from matscipy.electrochemistry.poisson_nernst_planck_solver_2d_fenicsx import Po
 # define desired system
 pnp_2d = PoissonNernstPlanckSystemFEniCSx2d(
     c=reference_concentrations, z=number_charges,
-    mesh_file=input.mesh_msh, scale_mesh=False)
+    mesh_file=mesh_msh, scale_mesh=False)
 
 pnp_2d.apply_concentration_dirichlet_bc(0, pnp_2d.c_scaled[0], 2)
 pnp_2d.apply_concentration_dirichlet_bc(1, pnp_2d.c_scaled[1], 2)

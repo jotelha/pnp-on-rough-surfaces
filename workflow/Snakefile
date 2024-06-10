@@ -10,6 +10,8 @@ profile_label_csv_mapping = {label: entry["file"] for label, entry in config["pr
 
 profile_labels = list(config["profiles"].keys())
 
+number_of_species = len(config["number_charges"])
+
 rule homogenize:
     output:
         profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
@@ -41,14 +43,27 @@ rule solve:
     input:
         mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
     output:
-        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+        solution_checkpoint_bp=directory(f"{out_prefix}/checkpoint/{{profile}}.bp")
     log:
         f"{out_prefix}/logs/015_solve/{{profile}}.log"
     script:
         "scripts/solve.py"
 
+rule plot_solution_2d:
+    input:
+        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+    output:
+        [f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png", *[f"{out_prefix}/plot_2d/{{profile}}_concentration_{i}.png" for i in range(number_of_species)]]
+    log:
+        f"{out_prefix}/logs/020_plot_solution_2d/{{profile}}.log"
+    script:
+        "scripts/plot_solution_2d.py"
+
+rule single_result:
+    input:
+        f"{out_prefix}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
 rule default:
     input:
-        expand(f"{out_prefix}/meshes/{{profile}}.msh",  profile=profile_labels)
+        expand(f"{out_prefix}/checkpoint/{{profile}}.bp",  profile=profile_labels)
     default_target: True
