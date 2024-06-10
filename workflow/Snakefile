@@ -1,0 +1,54 @@
+from snakemake.utils import min_version
+min_version("6.0")
+
+configfile: "workflow/config.yml"
+
+out_prefix = config["out_prefix"]
+in_prefix = config["in_prefix"]
+
+profile_label_csv_mapping = {label: entry["file"] for label, entry in config["profiles"].items()}
+
+profile_labels = list(config["profiles"].keys())
+
+rule homogenize:
+    output:
+        profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
+    log:
+        f"{out_prefix}/logs/005_homogenize/{{profile}}.log"
+    run:
+        import os.path
+        import shutil
+        import logging
+        logging.basicConfig(filename=log[0], encoding='utf-8', level=logging.DEBUG)
+        logger = logging.getLogger(__name__)
+        infile = os.path.join(in_prefix, profile_label_csv_mapping[wildcards.profile])
+
+        shutil.copy(infile, output.profile_csv)
+        logger.info("Copied %s to %s", infile, output.profile_csv)
+
+rule mesh:
+    input:
+        profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
+    output:
+        geometry_geo=f"{out_prefix}/geometries/{{profile}}.geo_unrolled",
+        mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
+    log:
+        f"{out_prefix}/logs/010_mesh/{{profile}}.log"
+    script:
+        "scripts/mesh.py"
+
+rule solve:
+    input:
+        mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
+    output:
+        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+    log:
+        f"{out_prefix}/logs/015_solve/{{profile}}.log"
+    script:
+        "scripts/solve.py"
+
+
+rule default:
+    input:
+        expand(f"{out_prefix}/meshes/{{profile}}.msh",  profile=profile_labels)
+    default_target: True

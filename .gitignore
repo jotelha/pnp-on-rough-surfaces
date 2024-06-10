@@ -1,2 +1,8 @@
+*.ipynb
+*.html
+*.svg
+.idea/
+.snakemake/
 .ipynb_checkpoints/
 data/
+out/

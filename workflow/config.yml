@@ -1,0 +1,50 @@
+in_prefix: 'data/profiles'
+out_prefix: 'out'
+
+number_of_species: 2
+reference_conentrations: [1.0e-4, 1.0e-4]  #mM
+number_charges: [1, -1]
+potential_bias: 0.05 # V
+
+debye_length: 9.650417803483358e-07
+
+height_normalized: 10
+
+profiles:
+  rectangle_with_single_rough_edge_parallel:
+    file: Rough surface-3D-10x2-1-line (Parallel sliding direction).csv
+    xscale: 1.0e-6
+    yscale: 1.0e-6
+    skiprows: 1
+    delimiter: ','
+    usecols: [0,1]
+    unpack: true
+    max_rows: 1010
+  rectangle_with_single_rough_edge_vertical:
+    file: Rough surface-3D-10x2-1-line (Vertical sliding direction).csv
+    xscale: 1.0e-6
+    yscale: 1.0e-6
+    skiprows: 1
+    delimiter: ','
+    usecols: [0,1]
+    unpack: true
+    max_rows: 1007
+  rectangle_with_single_smooth_edge_parallel:
+    file: Smooth surface-3D-10x2-1-line (Parallel sliding direction).csv
+    xscale: 1.0e-6
+    yscale: 1.0e-6
+    skiprows: 1
+    delimiter: ','
+    usecols: [0,1]
+    unpack: true
+    max_rows: 1010
+  rectangle_with_single_smooth_edge_vertical:
+    file: Smooth surface-3D-10x2-1-line (Vertical sliding direction).csv
+    xscale: 1.0e-6
+    yscale: 1.0e-6
+    skiprows: 1
+    delimiter: ','
+    usecols: [0,1]
+    unpack: true
+    max_rows: 1007
+
