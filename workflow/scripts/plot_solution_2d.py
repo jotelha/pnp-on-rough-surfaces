@@ -5,12 +5,9 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-debye_length = config["debye_length"]
-potential_bias = config["potential_bias"]
-reference_concentrations = config["reference_concentrations"]
-number_charges = config["number_charges"]
+number_of_species = config["number_of_species"]
 
-solution_checkpoint_bp = input.solution_checkpoint_bp
+dimensional_solution_checkpoint_bp = input.dimensional_solution_checkpoint_bp
 
 import logging
 
@@ -22,68 +19,66 @@ import dolfinx
 import adios4dolfinx
 import pyvista
 
-from dolfinx import default_scalar_type
-from dolfinx.fem import Function, FunctionSpace
 from dolfinx import plot
 
 from mpi4py import MPI
 
-# from matscipy.electrochemistry.poisson_nernst_planck_solver_2d_fenicsx import PoissonNernstPlanckSystemFEniCSx2d
+logger.info("Read mesh from file '%s'.", dimensional_solution_checkpoint_bp)
+mesh = adios4dolfinx.read_mesh(dimensional_solution_checkpoint_bp,
+                               comm=MPI.COMM_WORLD,
+                               engine="BP4",
+                               ghost_mode=dolfinx.mesh.GhostMode.none)
 
-mesh = adios4dolfinx.read_mesh(MPI.COMM_WORLD, solution_checkpoint_bp, "BP4", dolfinx.mesh.GhostMode.none)
+single_element_CG1 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
+scalar_function_space_CG1 = dolfinx.fem.functionspace(mesh, single_element_CG1)
 
-P = basix.ufl.element('Lagrange', mesh.basix_cell(), 3)
-elements = [P] * 3
-H = basix.ufl.mixed_element(elements)
-W = dolfinx.fem.FunctionSpace(mesh, H)
+potential_function = dolfinx.fem.Function(scalar_function_space_CG1,
+                                          dtype=dolfinx.default_scalar_type)
+logger.info("Read potential from file '%s'.", dimensional_solution_checkpoint_bp)
+adios4dolfinx.read_function(dimensional_solution_checkpoint_bp,
+                            potential_function,
+                            name="potential")
 
-w = dolfinx.fem.Function(W)
-
-adios4dolfinx.read_function(w, solution_checkpoint_bp)
-
-solution_functions = w.split()
-potential_function = solution_functions[0]
-concentration_functions = solution_functions[1:]
-
-gdim = mesh.geometry.dim
-
-H0 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
-W0 = FunctionSpace(mesh, H0)
-
-potential_function_normalized_interpolated = Function(W0, dtype=default_scalar_type)
-potential_function_normalized_interpolated.interpolate(potential_function)
-
-concentration_functions_normalized_interpolated = []
-
-M = len(concentration_functions)
-for i, concentration_function in enumerate(concentration_functions):
-    concentration_function_normalized_interpolated = Function(W0, dtype=default_scalar_type)
-    concentration_function_normalized_interpolated.interpolate(concentration_function)
-    concentration_functions_normalized_interpolated.append(concentration_function_normalized_interpolated)
+concentration_functions = []
+for i in range(number_of_species):
+    concentration_function = dolfinx.fem.Function(
+        scalar_function_space_CG1, dtype=dolfinx.default_scalar_type)
+    logger.info("Read concentration %d from file '%s'.", i, dimensional_solution_checkpoint_bp)
+    adios4dolfinx.read_function(dimensional_solution_checkpoint_bp,
+                                concentration_function,
+                                name=f"concentration_{i}")
+    concentration_functions.append(concentration_function)
 
 # plot
-pyvista.start_xvfb()
+logger.info("Start pyvista.")
+# if pyvista.OFF_SCREEN:
+pyvista.start_xvfb(wait=0.1)
+logger.info("Create plot grid.")
 topology, cell_types, geometry = plot.vtk_mesh(mesh)
 grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
 
-grid.point_data["potential"] = potential_function_normalized_interpolated.x.array.real
+grid.point_data["potential"] = potential_function.x.array.real
 grid.set_active_scalars("potential")
 
+logger.info("Plot potential.")
 plotter = pyvista.Plotter()
 plotter.add_mesh(grid, show_edges=False)
 plotter.view_xy()
 
 plotter.camera.zoom(20)
 plotter.show()
-plotter.screenshot(output[0])
+logger.info("Dump potential plot to %s.", output.potential_png)
+plotter.screenshot(output.potential_png)
 
-for i, concentration_function_normalized_interpolated in enumerate(concentration_functions_normalized_interpolated):
+for i, concentration_function in enumerate(concentration_functions):
     grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
-    grid.point_data["concentration"] = concentration_function_normalized_interpolated.x.array.real
+    grid.point_data["concentration"] = concentration_function.x.array.real
     grid.set_active_scalars("concentration")
+    logger.info("Plot concentration %d.", i)
     plotter = pyvista.Plotter()
     plotter.add_mesh(grid, show_edges=False)
     plotter.view_xy()
     plotter.camera.zoom(20)
     plotter.show()
-    plotter.screenshot(output[1+i])
+    logger.info("Dump concentration %i plot to %s.", i, output[i])
+    plotter.screenshot(output[i])

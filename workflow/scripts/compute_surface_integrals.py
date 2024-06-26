@@ -24,7 +24,6 @@ import adios4dolfinx
 import numpy as np
 
 from dolfinx import default_scalar_type
-from dolfinx.fem import Function, FunctionSpace
 
 from mpi4py import MPI
 
@@ -33,7 +32,7 @@ mesh = adios4dolfinx.read_mesh(MPI.COMM_WORLD, solution_checkpoint_bp, "BP4", do
 P = basix.ufl.element('Lagrange', mesh.basix_cell(), 3)
 elements = [P] * 3
 H = basix.ufl.mixed_element(elements)
-W = dolfinx.fem.FunctionSpace(mesh, H)
+W = dolfinx.fem.functionspace(mesh, H)
 
 w = dolfinx.fem.Function(W)
 
@@ -46,16 +45,16 @@ concentration_functions = solution_functions[1:]
 gdim = mesh.geometry.dim
 
 H0 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
-W0 = FunctionSpace(mesh, H0)
+W0 = dolfinx.fem.functionspace(mesh, H0)
 
-potential_function_normalized_interpolated = Function(W0, dtype=default_scalar_type)
+potential_function_normalized_interpolated = dolfinx.fem.Function(W0, dtype=default_scalar_type)
 potential_function_normalized_interpolated.interpolate(potential_function)
 
 concentration_functions_normalized_interpolated = []
 
 M = len(concentration_functions)
 for i, concentration_function in enumerate(concentration_functions):
-    concentration_function_normalized_interpolated = Function(W0, dtype=default_scalar_type)
+    concentration_function_normalized_interpolated = dolfinx.fem.Function(W0, dtype=default_scalar_type)
     concentration_function_normalized_interpolated.interpolate(concentration_function)
     concentration_functions_normalized_interpolated.append(concentration_function_normalized_interpolated)
 

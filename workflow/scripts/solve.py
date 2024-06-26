@@ -9,6 +9,7 @@ logfile = snakemake.log[0]
 potential_bias = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
+number_of_species = config["number_of_species"]
 
 mesh_msh = input.mesh_msh
 
@@ -25,8 +26,8 @@ pnp_2d = PoissonNernstPlanckSystemFEniCSx2d(
     c=reference_concentrations, z=number_charges,
     mesh_file=mesh_msh, scale_mesh=False)
 
-pnp_2d.apply_concentration_dirichlet_bc(0, pnp_2d.c_scaled[0], 2)
-pnp_2d.apply_concentration_dirichlet_bc(1, pnp_2d.c_scaled[1], 2)
+for i in range(number_of_species):
+    pnp_2d.apply_concentration_dirichlet_bc(i, pnp_2d.c_scaled[i], 2)
 
 delta_u_scaled = potential_bias / pnp_2d.u_unit
 
@@ -35,5 +36,5 @@ pnp_2d.apply_potential_dirichlet_bc(0.0, 2)
 
 pnp_2d.solve()
 
-adios4dolfinx.write_mesh(pnp_2d.mesh, output.solution_checkpoint_bp)
-adios4dolfinx.write_function(u=pnp_2d.w, filename=output.solution_checkpoint_bp)
+adios4dolfinx.write_mesh(output.solution_checkpoint_bp, pnp_2d.mesh)
+adios4dolfinx.write_function(filename=output.solution_checkpoint_bp, u=pnp_2d.w, name="solution")

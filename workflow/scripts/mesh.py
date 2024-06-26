@@ -92,8 +92,8 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     model.addPhysicalGroup(1, rough_edge, tag=4, name="Rough boundary")
     model.addPhysicalGroup(2, [surface], tag=5, name="Domain")
 
-
     return model
+
 
 x_dimensional, y_dimensional = np.loadtxt(profile_csv,
                           skiprows=profile_config["skiprows"],
@@ -115,8 +115,8 @@ model = gmsh_rectangle_with_single_rough_edge(
 
 gmsh.write(output.geometry_geo)
 
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.1)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.2)
+gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.5)
+gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 1.0)
 
 gmsh.model.mesh.generate(2)
 

@@ -6,7 +6,10 @@ reference_concentrations: [1.0e-4, 1.0e-4]  #mM
 number_charges: [1, -1]
 potential_bias: 0.05 # V
 
-debye_length: 9.650417803483358e-07
+debye_length: 9.650417803483358e-07 # m
+
+temperature: 298.15  # K
+relative_permittivity: 79  # water
 
 height_normalized: 10
 

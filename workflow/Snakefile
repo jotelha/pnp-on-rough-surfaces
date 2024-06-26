@@ -49,13 +49,36 @@ rule solve:
     script:
         "scripts/solve.py"
 
+rule interpolate:
+     input:
+         solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+     output:
+         interpolated_solution_checkpoint_bp=directory(f"{out_prefix}/interpolation/{{profile}}.bp")
+     log:
+         f"{out_prefix}/logs/020_interpolate/{{profile}}.log"
+     script:
+         "scripts/interpolate.py"
+
+rule scale:
+     input:
+         interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+     output:
+         *[f"{out_prefix}/solutions/{{profile}}_concentration_{i}.xdmf" for i in range(number_of_species)],
+         dimensional_solution_checkpoint_bp=directory(f"{out_prefix}/solutions/{{profile}}.bp"),
+         dimensional_potential_xdmf=f"{out_prefix}/solutions/{{profile}}_potential.xdmf"
+     log:
+         f"{out_prefix}/logs/030_scale/{{profile}}.log"
+     script:
+         "scripts/scale.py"
+
 rule plot_solution_2d:
     input:
-        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+        dimensional_solution_checkpoint_bp=f"{out_prefix}/solutions/{{profile}}.bp"
     output:
-        [f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png", *[f"{out_prefix}/plot_2d/{{profile}}_concentration_{i}.png" for i in range(number_of_species)]]
+        *[f"{out_prefix}/plot_2d/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
+        potential_png=f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",
     log:
-        f"{out_prefix}/logs/020_plot_solution_2d/{{profile}}.log"
+        f"{out_prefix}/logs/050_plot_solution_2d/{{profile}}.log"
     script:
         "scripts/plot_solution_2d.py"
 
@@ -65,5 +88,5 @@ rule single_result:
 
 rule default:
     input:
-        expand(f"{out_prefix}/checkpoint/{{profile}}.bp",  profile=profile_labels)
+        expand(f"{out_prefix}/interpolation/{{profile}}.bp",  profile=profile_labels)
     default_target: True
