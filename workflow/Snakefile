@@ -75,7 +75,7 @@ rule plot_solution_2d:
     input:
         dimensional_solution_checkpoint_bp=f"{out_prefix}/solutions/{{profile}}.bp"
     output:
-        *[f"{out_prefix}/plot_2d/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
+        *[f"{out_prefix}/plot_solution_2d/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
         potential_png=f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",
     log:
         f"{out_prefix}/logs/050_plot_solution_2d/{{profile}}.log"
@@ -88,5 +88,5 @@ rule single_result:
 
 rule default:
     input:
-        expand(f"{out_prefix}/interpolation/{{profile}}.bp",  profile=profile_labels)
+        expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels)
     default_target: True
