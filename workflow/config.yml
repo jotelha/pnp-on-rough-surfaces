@@ -13,6 +13,8 @@ relative_permittivity: 79  # water
 
 height_normalized: 10
 
+reference_profile_label: rectangle_flat_from_vertical
+
 profiles:
   rectangle_with_single_rough_edge_parallel:
     file: Rough surface-3D-10x2-1-line (Parallel sliding direction).csv
@@ -50,4 +52,21 @@ profiles:
     usecols: [0,1]
     unpack: true
     max_rows: 1007
-
+  rectangle_flat_from_parallel:
+    file: rectangle_flat_from_parallel.csv
+    xscale: 1.0e-6
+    yscale: 1.0e-6
+    skiprows: 1
+    delimiter: ','
+    usecols: [ 0,1 ]
+    unpack: true
+    max_rows: 1010
+  rectangle_flat_from_vertical:
+    file: rectangle_flat_from_vertical.csv
+    xscale: 1.0e-6
+    yscale: 1.0e-6
+    skiprows: 1
+    delimiter: ','
+    usecols: [ 0,1 ]
+    unpack: true
+    max_rows: 1007

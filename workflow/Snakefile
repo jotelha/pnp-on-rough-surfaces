@@ -10,6 +10,8 @@ profile_label_csv_mapping = {label: entry["file"] for label, entry in config["pr
 
 profile_labels = list(config["profiles"].keys())
 
+reference_profile_label = config["reference_profile_label"]
+
 number_of_species = len(config["number_charges"])
 
 rule homogenize:
@@ -27,6 +29,34 @@ rule homogenize:
 
         shutil.copy(infile, output.profile_csv)
         logger.info("Copied %s to %s", infile, output.profile_csv)
+
+rule compute_profile_properties:
+    input:
+        profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
+    output:
+        json_file=f"{out_prefix}/profile_properties/{{profile}}.json"
+    log:
+        f"{out_prefix}/logs/008_compute_profile_properties/{{profile}}.log"
+    script:
+        "scripts/compute_profile_properties.py"
+
+rule aggregate_profile_properties:
+    input:
+        expand(f"{out_prefix}/profile_properties/{{profile}}.json", profile=profile_labels)
+    output:
+        csv_file=f"{out_prefix}/profile_properties/profile_properties.csv"
+    run:
+        import json
+        import pandas as pd
+
+        data_records = []
+        for json_file in input:
+            with open(json_file, 'r') as file:
+                data = json.load(file)
+            data_records.append(data)
+
+        df = pd.DataFrame.from_records(data_records)
+        df.to_csv(output.csv_file)
 
 rule mesh:
     input:
@@ -81,11 +111,69 @@ rule compute_surface_integrals:
      script:
          "scripts/compute_surface_integrals.py"
 
-rule aggregate:
+rule compute_derived_properties:
+    input:
+        surface_integrals_json_file=f"{out_prefix}/surface_integrals/{{profile}}.json",
+        profile_properties_json_file=f"{out_prefix}/profile_properties/{{profile}}.json"
+    output:
+        json_file=f"{out_prefix}/derived_properties/{{profile}}.json"
+    log:
+        f"{out_prefix}/logs/045_compute_derived_properties/{{profile}}.log"
+    script:
+         "scripts/compute_derived_properties.py"
+
+rule compute_comparative_properties:
+    input:
+        json_file=f"{out_prefix}/derived_properties/{{profile}}.json",
+        reference_json_file=f"{out_prefix}/derived_properties/{reference_profile_label}.json",
+    output:
+        json_file=f"{out_prefix}/comparative_properties/{{profile}}.json"
+    log:
+        f"{out_prefix}/logs/048_compute_comparative_properties/{{profile}}.log"
+    script:
+         "scripts/compute_comparative_properties.py"
+
+rule aggregate_surface_integrals:
     input:
         expand(f"{out_prefix}/surface_integrals/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/surface_integrals/surface_integrals.csv"
+    run:
+        import json
+        import pandas as pd
+
+        data_records = []
+        for json_file in input:
+            with open(json_file, 'r') as file:
+                data = json.load(file)
+            data_records.append(data)
+
+        df = pd.DataFrame.from_records(data_records)
+        df.to_csv(output.csv_file)
+
+rule aggregate_derived_properties:
+    input:
+        expand(f"{out_prefix}/derived_properties/{{profile}}.json", profile=profile_labels)
+    output:
+        csv_file=f"{out_prefix}/derived_properties/derived_properties.csv"
+    run:
+        import json
+        import pandas as pd
+
+        data_records = []
+        for json_file in input:
+            with open(json_file, 'r') as file:
+                data = json.load(file)
+            data_records.append(data)
+
+        df = pd.DataFrame.from_records(data_records)
+        df.to_csv(output.csv_file)
+
+rule aggregate_comparative_properties:
+    input:
+        expand(f"{out_prefix}/comparative_properties/{{profile}}.json", profile=profile_labels)
+    output:
+        csv_file=f"{out_prefix}/comparative_properties/comparative_properties.csv"
     run:
         import json
         import pandas as pd
@@ -106,11 +194,25 @@ rule plot:
         png_file=f"{out_prefix}/surface_integrals/surface_integrals.png"
     run:
         import pandas as pd
+        import matplotlib.pyplot as plt
         import seaborn as sns
+
         df = pd.read_csv(input.csv_file)
         sns_plot = sns.scatterplot(data=df, x="profile", y="charge_SI", hue="profile", style="profile")
+        sns_plot.set_xticklabels(sns_plot.get_xticklabels(), rotation=45, horizontalalignment='right')
+        # plt.gcf().set_size_inches(10, 6)
         fig = sns_plot.get_figure()
+        fig.set_size_inches(10, 6)
+        fig.tight_layout()
         fig.savefig(output.png_file)
+
+rule generate_comparative_plots:
+    input:
+        csv_file=f"{out_prefix}/comparative_properties/comparative_properties.csv"
+    output:
+        output_dir=directory(f"{out_prefix}/comparative_plots")
+    script:
+        "scripts/generate_comparative_plots.py"
 
 rule plot_solution_2d:
     input:
@@ -130,7 +232,10 @@ rule single_result:
 rule default:
     input:
         expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels),
-        f"{out_prefix}/surface_integrals/surface_integrals.png"
+        f"{out_prefix}/surface_integrals/surface_integrals.png",
+        f"{out_prefix}/profile_properties/profile_properties.csv",
+        f"{out_prefix}/derived_properties/derived_properties.csv",
+        f"{out_prefix}/comparative_properties/comparative_properties.csv",
+        f"{out_prefix}/comparative_plots"
         # expand(f"{out_prefix}/surface_integrals/{{profile}}.json",  profile=profile_labels)
-
     default_target: True

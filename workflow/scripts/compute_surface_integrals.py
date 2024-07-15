@@ -25,10 +25,7 @@ import dolfinx
 import ufl
 import adios4dolfinx
 
-import numpy as np
 import scipy.constants as sc
-
-from dolfinx import default_scalar_type
 
 from mpi4py import MPI
 
@@ -62,10 +59,17 @@ charge_SI_expression = dolfinx.fem.form(charge_density_SI * ufl.dx)
 charge_SI_local = dolfinx.fem.assemble_scalar(charge_SI_expression)
 charge_SI = mesh.comm.allreduce(charge_SI_local, op=MPI.SUM)
 
+amount_of_substance_SI = []
+for i in range(number_of_species):
+    amount_of_substance_SI_expression = dolfinx.fem.form(concentration_functions[i]* ufl.dx)
+    amount_of_substance_SI_local = dolfinx.fem.assemble_scalar(amount_of_substance_SI_expression)
+    amount_of_substance_SI.append(mesh.comm.allreduce(amount_of_substance_SI_local, op=MPI.SUM))
+
 data = {
             'profile': wildcards.profile,
             'charge_SI': charge_SI,
-        }
+            **{f'amount_of_substance_SI_{i}': amount_of_substance_SI[i] for i in range(number_of_species)}
+       }
 
 with open(output.json_file, 'w') as json_file:
     json.dump(data, json_file, indent=4)

@@ -20,6 +20,7 @@ import logging
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=2,
                                           lower_boundary_mesh_size=None,
                                           upper_boundary_mesh_size=0.5) -> gmsh.model:
