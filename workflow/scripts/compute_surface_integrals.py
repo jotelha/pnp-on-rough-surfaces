@@ -9,62 +9,74 @@ debye_length = config["debye_length"]
 potential_bias = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
+number_of_species = config["number_of_species"]
 
-solution_checkpoint_bp = input.solution_checkpoint_bp
+dimensional_solution_checkpoint_bp = input.dimensional_solution_checkpoint_bp
 
 import logging
 
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+import json
+
 import basix
 import dolfinx
+import ufl
 import adios4dolfinx
 
 import numpy as np
+import scipy.constants as sc
 
 from dolfinx import default_scalar_type
 
 from mpi4py import MPI
 
-mesh = adios4dolfinx.read_mesh(MPI.COMM_WORLD, solution_checkpoint_bp, "BP4", dolfinx.mesh.GhostMode.none)
+mesh = adios4dolfinx.read_mesh(dimensional_solution_checkpoint_bp,
+                               comm=MPI.COMM_WORLD,
+                               engine="BP4", ghost_mode=dolfinx.mesh.GhostMode.none)
 
-P = basix.ufl.element('Lagrange', mesh.basix_cell(), 3)
-elements = [P] * 3
-H = basix.ufl.mixed_element(elements)
-W = dolfinx.fem.functionspace(mesh, H)
+single_element_CG1 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
+scalar_function_space_CG1 = dolfinx.fem.functionspace(mesh, single_element_CG1)
+potential_function = dolfinx.fem.Function(scalar_function_space_CG1,
+                                          dtype=dolfinx.default_scalar_type)
+concentration_functions = [dolfinx.fem.Function(scalar_function_space_CG1,
+                                          dtype=dolfinx.default_scalar_type) for _ in range(number_of_species)]
 
-w = dolfinx.fem.Function(W)
+adios4dolfinx.read_function(
+        filename=input.dimensional_solution_checkpoint_bp,
+        u=potential_function, name="potential")
 
-adios4dolfinx.read_function(w, solution_checkpoint_bp)
+for i in range(number_of_species):
+    adios4dolfinx.read_function(
+        filename=input.dimensional_solution_checkpoint_bp,
+        u=concentration_functions[i], name=f"concentration_{i}")
 
-solution_functions = w.split()
-potential_function = solution_functions[0]
-concentration_functions = solution_functions[1:]
+faraday_constant = sc.value('Faraday constant')
 
-gdim = mesh.geometry.dim
+charge_density_SI = 0
+for i in range(number_of_species):
+    charge_density_SI += faraday_constant*number_charges[i]*concentration_functions[i]
 
-H0 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
-W0 = dolfinx.fem.functionspace(mesh, H0)
+charge_SI_expression = dolfinx.fem.form(charge_density_SI * ufl.dx)
+charge_SI_local = dolfinx.fem.assemble_scalar(charge_SI_expression)
+charge_SI = mesh.comm.allreduce(charge_SI_local, op=MPI.SUM)
 
-potential_function_normalized_interpolated = dolfinx.fem.Function(W0, dtype=default_scalar_type)
-potential_function_normalized_interpolated.interpolate(potential_function)
+data = {
+            'profile': wildcards.profile,
+            'charge_SI': charge_SI,
+        }
 
-concentration_functions_normalized_interpolated = []
-
-M = len(concentration_functions)
-for i, concentration_function in enumerate(concentration_functions):
-    concentration_function_normalized_interpolated = dolfinx.fem.Function(W0, dtype=default_scalar_type)
-    concentration_function_normalized_interpolated.interpolate(concentration_function)
-    concentration_functions_normalized_interpolated.append(concentration_function_normalized_interpolated)
+with open(output.json_file, 'w') as json_file:
+    json.dump(data, json_file, indent=4)
 
 # compute 1d reference solution
-pnp_1d = PoissonNernstPlanckSystemFEniCSx(c=c, z=z, delta_u=delta_u, L=L, N=1000)
-pnp_1d.use_standard_interface_bc()
-
-potential_ref_normalized, concentrations_ref_normalized, _ = pnp_1d.solve()
-
-x_ref_unitless = pnp_1d.grid_dimensionless
-
-for i, c_ref_normalized in enumerate(concentrations_ref_normalized):
-    N_excess_ref = np.trapz(c_ref_normalized-1., x_ref_unitless)
+# pnp_1d = PoissonNernstPlanckSystemFEniCSx(c=c, z=z, delta_u=delta_u, L=L, N=1000)
+# pnp_1d.use_standard_interface_bc()
+#
+# potential_ref_normalized, concentrations_ref_normalized, _ = pnp_1d.solve()
+#
+# x_ref_unitless = pnp_1d.grid_dimensionless
+#
+# for i, c_ref_normalized in enumerate(concentrations_ref_normalized):
+#     N_excess_ref = np.trapz(c_ref_normalized-1., x_ref_unitless)

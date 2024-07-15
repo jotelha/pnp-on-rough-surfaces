@@ -71,6 +71,47 @@ rule scale:
      script:
          "scripts/scale.py"
 
+rule compute_surface_integrals:
+     input:
+         dimensional_solution_checkpoint_bp=f"{out_prefix}/solutions/{{profile}}.bp"
+     output:
+         json_file=f"{out_prefix}/surface_integrals/{{profile}}.json"
+     log:
+         f"{out_prefix}/logs/040_compute_surface_integrals/{{profile}}.log"
+     script:
+         "scripts/compute_surface_integrals.py"
+
+rule aggregate:
+    input:
+        expand(f"{out_prefix}/surface_integrals/{{profile}}.json", profile=profile_labels)
+    output:
+        csv_file=f"{out_prefix}/surface_integrals/surface_integrals.csv"
+    run:
+        import json
+        import pandas as pd
+
+        data_records = []
+        for json_file in input:
+            with open(json_file, 'r') as file:
+                data = json.load(file)
+            data_records.append(data)
+
+        df = pd.DataFrame.from_records(data_records)
+        df.to_csv(output.csv_file)
+
+rule plot:
+    input:
+        csv_file=f"{out_prefix}/surface_integrals/surface_integrals.csv"
+    output:
+        png_file=f"{out_prefix}/surface_integrals/surface_integrals.png"
+    run:
+        import pandas as pd
+        import seaborn as sns
+        df = pd.read_csv(input.csv_file)
+        sns_plot = sns.scatterplot(data=df, x="profile", y="charge_SI", hue="profile", style="profile")
+        fig = sns_plot.get_figure()
+        fig.savefig(output.png_file)
+
 rule plot_solution_2d:
     input:
         dimensional_solution_checkpoint_bp=f"{out_prefix}/solutions/{{profile}}.bp"
@@ -88,5 +129,8 @@ rule single_result:
 
 rule default:
     input:
-        expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels)
+        expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels),
+        f"{out_prefix}/surface_integrals/surface_integrals.png"
+        # expand(f"{out_prefix}/surface_integrals/{{profile}}.json",  profile=profile_labels)
+
     default_target: True
