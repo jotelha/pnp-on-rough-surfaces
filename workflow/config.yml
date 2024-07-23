@@ -11,7 +11,10 @@ debye_length: 9.650417803483358e-07 # m
 temperature: 298.15  # K
 relative_permittivity: 79  # water
 
-height_normalized: 10
+height_normalized: 10  # debye lengths
+
+lower_boundary_mesh_size: 0.5  # debye lengths
+upper_boundary_mesh_size: 2.0  # debye lengths
 
 reference_profile_label: rectangle_flat_from_vertical
 
