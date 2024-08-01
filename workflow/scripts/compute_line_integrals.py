@@ -5,18 +5,13 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-debye_length = config["debye_length"]
-potential_bias = config["potential_bias"]
-reference_concentrations = config["reference_concentrations"]
-number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]
-temperature = config["temperature"]
-relative_permittivity = config["relative_permittivity"]
 height_normalized = config["height_normalized"]
 
 mesh_msh = input.mesh_msh
-dimensional_solution_checkpoint_bp = input.dimensional_solution_checkpoint_bp
+interpolated_solution_checkpoint_bp = input.interpolated_solution_checkpoint_bp
 
+import os.path
 import logging
 
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
@@ -25,7 +20,6 @@ logger = logging.getLogger(__name__)
 import basix
 import dolfinx
 import numpy as np
-import ufl
 import adios4dolfinx
 
 import scipy.constants as sc
@@ -35,39 +29,6 @@ from mpi4py import MPI
 import gmsh
 
 # get boundary
-
-# helper functions
-def ionic_strength(z, c):
-    """Compute a system's ionic strength from charges and concentrations.
-
-    Returns
-    -------
-    ionic_strength : float
-        ionic strength ( 1/2 * sum(z_i^2*c_i) )
-        [concentration unit, i.e. mol m^-3]
-    """
-    return 0.5*np.sum(np.square(z) * c)
-
-vacuum_permittivity = sc.epsilon_0
-gas_constant = sc.value('molar gas constant')
-faraday_constant = sc.value('Faraday constant')
-
-
-def lambda_D(ionic_strength):
-    """Compute the system's Debye length.
-
-    Returns
-    -------
-    lambda_D : float
-        Debye length, sqrt( epsR*eps*R*T/(2*F^2*I) ) [length unit, i.e. m]
-    """
-    return np.sqrt(
-        relative_permittivity * vacuum_permittivity * gas_constant * temperature / (
-                2.0 * faraday_constant ** 2 * ionic_strength))
-
-
-c_unit = ionic_strength(z=number_charges, c=reference_concentrations)
-l_unit = lambda_D(ionic_strength=c_unit)
 
 gmsh.initialize()
 
@@ -90,10 +51,10 @@ logger.info("coords_3d.shape: %s", coords_3d.shape)
 
 # scale coords
 #
-coords_3d *= l_unit
+# coords_3d *= l_unit
 
 # read dimensional solution
-mesh = adios4dolfinx.read_mesh(dimensional_solution_checkpoint_bp,
+mesh = adios4dolfinx.read_mesh(interpolated_solution_checkpoint_bp,
                                comm=MPI.COMM_WORLD,
                                engine="BP4", ghost_mode=dolfinx.mesh.GhostMode.none)
 
@@ -105,35 +66,33 @@ concentration_functions = [dolfinx.fem.Function(scalar_function_space_CG1,
                                           dtype=dolfinx.default_scalar_type) for _ in range(number_of_species)]
 
 adios4dolfinx.read_function(
-        filename=input.dimensional_solution_checkpoint_bp,
-        u=potential_function, name="potential")
+        filename=interpolated_solution_checkpoint_bp,
+        u=potential_function, name="solution_function_0")
 
 for i in range(number_of_species):
     adios4dolfinx.read_function(
-        filename=input.dimensional_solution_checkpoint_bp,
-        u=concentration_functions[i], name=f"concentration_{i}")
+        filename=interpolated_solution_checkpoint_bp,
+        u=concentration_functions[i], name=f"solution_function_{i+1}")
 
 faraday_constant = sc.value('Faraday constant')
 
-tol = l_unit*1e-6
-y_max = 7*l_unit
+tol = 1e-6
+y_max = height_normalized
 N_points = 1001
 
-logger.info("Debye length: %g", debye_length)
-logger.info("l_unit: %g", l_unit)
 logger.info("tol: %g", tol)
 logger.info("y_max: %g", y_max)
 
 concentration_integrals = [[] for _ in range(number_of_species)]
-concentration_values = [[] for _ in range(number_of_species)]
+excess_concentration_integrals = [[] for _ in range(number_of_species)]
+# concentration_values = [[] for _ in range(number_of_species)]
 
 bb_tree = dolfinx.geometry.bb_tree(mesh, mesh.topology.dim)
 
-for x, y_min in zip(coords_3d[:,0], coords_3d[:,1]):
-    y_grid = np.linspace(y_min + tol, y_max - tol, N_points)
+os.makedirs(output.concentration_profile_directory, exist_ok=True)
 
-    #if x == 0:
-    #    x = tol
+for j, (x, y_min) in enumerate(zip(coords_3d[:,0], coords_3d[:,1])):
+    y_grid = np.linspace(y_min + tol, y_max - tol, N_points)
 
     points = np.zeros((3, N_points))
     points[0, :] = x
@@ -158,13 +117,52 @@ for x, y_min in zip(coords_3d[:,0], coords_3d[:,1]):
 
     logger.info("points_on_proc.shape: %s", points_on_proc.shape)
 
+    concentration_profiles = []
+    excess_concentration_profiles = []
     for i in range(number_of_species):
         concentration_profile = concentration_functions[i].eval(points_on_proc, cells).T
-        concentration_values[i].append(concentration_profile)
-        concentration_integrals[i].append(np.trapz(y=concentration_profile, x=y_grid))
+        excess_concentration_profile = concentration_profile - 1 # reference concentration is always 1
+
+        logger.info("concentration_profile.shape: %s", concentration_profile.shape)
+
+        concentration_integral = np.trapz(y=concentration_profile, x=y_grid)
+        excess_concentration_integral = np.trapz(y=(concentration_profile-1), x=y_grid)
+
+        logger.info("concentration_integral: %s", concentration_integral)
+        logger.info("concentration_integral.shape: %s", concentration_integral.shape)
+
+        logger.info("excess_concentration_integral: %s", excess_concentration_integral)
+        logger.info("excess_concentration_integral.shape: %s", excess_concentration_integral.shape)
+
+        concentration_profiles.append(concentration_profile.flatten())
+        excess_concentration_profiles.append(excess_concentration_profile.flatten())
+
+        concentration_integrals[i].append(concentration_integral)
+        excess_concentration_integrals[i].append(excess_concentration_integral)
+
+    grid_and_concentration_profiles = np.vstack([
+        y_grid, *concentration_profiles, *excess_concentration_profiles]).T
+
+    header = ','.join(['y',
+              *[f'concentration_{i}' for i in range(number_of_species)],
+              *[f'excess_concentration_{i}' for i in range(number_of_species)]])
+
+    with open(os.path.join(output.concentration_profile_directory, f"{j}.csv"), 'w') as f:
+        f.write(header + "\n")
+        np.savetxt(f, grid_and_concentration_profiles, delimiter=",")
 
 for i in range(number_of_species):
-    np.savetxt(output[i], np.array(concentration_values[i]))
+    concentration_integrals[i] = np.array(concentration_integrals[i]).flatten()
+    excess_concentration_integrals[i] = np.array(excess_concentration_integrals[i]).flatten()
+    logger.info("concentration_integrals[%d].shape: %s", i, concentration_integrals[i].shape)
 
-coords_and_integrals = np.hstack([coords_3d[:,0], coords_3d[:,1], *concentration_integrals])
-np.savetxt(output.integrals_csv, coords_and_integrals, header='x, y, concentration integrals')
+coords_and_integrals = np.vstack([coords_3d[:,0], coords_3d[:,1],
+                                  *concentration_integrals, *excess_concentration_integrals]).T
+
+header = ','.join(['x','y',
+              *[f'concentration_integral_{i}' for i in range(number_of_species)],
+              *[f'excess_concentration_integral_{i}' for i in range(number_of_species)]])
+
+with open(output.integrals_csv, 'w') as f:
+    f.write(header + "\n")
+    np.savetxt(f, coords_and_integrals, delimiter=",")
