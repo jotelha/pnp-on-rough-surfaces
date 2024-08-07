@@ -13,8 +13,8 @@ relative_permittivity: 79  # water
 
 height_normalized: 10  # debye lengths
 
-lower_boundary_mesh_size: 0.5  # debye lengths
-upper_boundary_mesh_size: 2.0  # debye lengths
+lower_boundary_mesh_size: 0.2  # debye lengths
+upper_boundary_mesh_size: 1.0  # debye lengths
 
 reference_profile_label: rectangle_flat_from_vertical
 

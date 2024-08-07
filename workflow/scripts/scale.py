@@ -33,7 +33,8 @@ from mpi4py import MPI
 import numpy as np
 import scipy.constants as sc
 
-vacuum_permittivity = sc.epsilon_0
+from utils import ionic_strength, lambda_D
+
 gas_constant = sc.value('molar gas constant')
 faraday_constant = sc.value('Faraday constant')
 
@@ -48,42 +49,14 @@ logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
 logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
     'relative permittivity eps_R', relative_permittivity, lwidth=label_width))
 logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
-    'vacuum permittivity eps_0', vacuum_permittivity, lwidth=label_width))
-logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
     'universal gas constant R', gas_constant, lwidth=label_width))
 logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
     'Faraday constant F', faraday_constant, lwidth=label_width))
 logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
     'f = F / (RT)', f, lwidth=label_width))
 
-
-def ionic_strength(z, c):
-    """Compute a system's ionic strength from charges and concentrations.
-
-    Returns
-    -------
-    ionic_strength : float
-        ionic strength ( 1/2 * sum(z_i^2*c_i) )
-        [concentration unit, i.e. mol m^-3]
-    """
-    return 0.5*np.sum(np.square(z) * c)
-
-
-def lambda_D(ionic_strength):
-    """Compute the system's Debye length.
-
-    Returns
-    -------
-    lambda_D : float
-        Debye length, sqrt( epsR*eps*R*T/(2*F^2*I) ) [length unit, i.e. m]
-    """
-    return np.sqrt(
-        relative_permittivity * vacuum_permittivity * gas_constant * temperature / (
-                2.0 * faraday_constant ** 2 * ionic_strength))
-
-
 c_unit = ionic_strength(z=number_charges, c=reference_concentrations)
-l_unit = lambda_D(ionic_strength=c_unit)
+l_unit = lambda_D(ionic_strength=c_unit, temperature=temperature, relative_permittivity=relative_permittivity)
 u_unit = gas_constant * temperature / faraday_constant
 
 logger.info('{:<{lwidth}s} {:> 8.4g}'.format(
@@ -99,6 +72,15 @@ mesh = adios4dolfinx.read_mesh(interpolated_solution_checkpoint_bp,
                                comm=MPI.COMM_WORLD,
                                engine="BP4",
                                ghost_mode=dolfinx.mesh.GhostMode.none)
+meshtags = {}
+for i in range(mesh.topology.dim + 1):
+    meshtags[i] = adios4dolfinx.read_meshtags(filename=interpolated_solution_checkpoint_bp,
+                                              mesh=mesh, meshtag_name=f"meshtags_{i}")
+
+facet_markers = adios4dolfinx.read_meshtags(filename=interpolated_solution_checkpoint_bp,
+                                            mesh=mesh, meshtag_name="facet_markers")
+cell_markers = adios4dolfinx.read_meshtags(filename=interpolated_solution_checkpoint_bp,
+                                           mesh=mesh, meshtag_name="cell_markers")
 
 single_element_CG1 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
 scalar_function_space_CG1 = dolfinx.fem.functionspace(mesh, single_element_CG1)
@@ -139,6 +121,15 @@ for i, concentration_function in enumerate(concentration_functions):
     adios4dolfinx.write_function(filename=dimensional_solution_checkpoint_bp,
                                  u=concentration_function,
                                  name=f"concentration_{i}")
+
+for i, tag in meshtags.items():
+    adios4dolfinx.write_meshtags(filename=dimensional_solution_checkpoint_bp,
+                                 mesh=mesh, meshtags=tag, meshtag_name=f"meshtags_{i}")
+
+adios4dolfinx.write_meshtags(filename=dimensional_solution_checkpoint_bp,
+                             mesh=mesh, meshtags=facet_markers, meshtag_name="facet_markers")
+adios4dolfinx.write_meshtags(filename=dimensional_solution_checkpoint_bp,
+                             mesh=mesh, meshtags=cell_markers, meshtag_name="cell_markers")
 
 logger.info("Write potential to file '%s'.", dimensional_potential_xdmf)
 with XDMFFile(mesh.comm, dimensional_potential_xdmf, "w") as file:

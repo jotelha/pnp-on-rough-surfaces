@@ -5,10 +5,31 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-number_of_species = config["number_of_species"]
 potential_bias = config["potential_bias"]
+reference_concentrations = config["reference_concentrations"]
+number_charges = config["number_charges"]
+number_of_species = config["number_of_species"]
+temperature = config["temperature"]
+relative_permittivity = config["relative_permittivity"]
 
 import json
+
+import numpy as np
+import scipy.constants as sc
+
+from utils import ionic_strength, lambda_D
+
+I = ionic_strength(z=number_charges, c=reference_concentrations)
+
+debye_length = lambda_D(ionic_strength=I, temperature=temperature, relative_permittivity=relative_permittivity)
+
+gas_constant = sc.value('molar gas constant')
+faraday_constant = sc.value('Faraday constant')
+
+thermal_voltage = gas_constant * temperature / faraday_constant
+
+with open(input.surface_charge_json_file, 'r') as file:
+    surface_charge_data = json.load(file)
 
 with open(input.surface_integrals_json_file, 'r') as file:
     surface_integrals_data = json.load(file)
@@ -16,23 +37,30 @@ with open(input.surface_integrals_json_file, 'r') as file:
 with open(input.profile_properties_json_file, 'r') as file:
     profile_properties_data = json.load(file)
 
-data = {**surface_integrals_data, **profile_properties_data}
+data = {**surface_charge_data, **surface_integrals_data, **profile_properties_data}
 
-amount_of_substance_per_real_surface_area_SI = []
-amount_of_substance_per_apparent_surface_area_SI = []
+amount_of_substance_per_real_surface_area = []
+amount_of_substance_per_apparent_surface_area = []
 for i in range(number_of_species):
-    amount_of_substance_per_real_surface_area_SI.append(data[f'amount_of_substance_SI_{i}']/data['real_surface_area_SI'])
-    amount_of_substance_per_apparent_surface_area_SI.append(data[f'amount_of_substance_SI_{i}'] / data['apparent_surface_area_SI'])
+    amount_of_substance_per_real_surface_area.append(data[f'amount_of_substance_{i}']/data['real_surface_area'])
+    amount_of_substance_per_apparent_surface_area.append(data[f'amount_of_substance_{i}'] / data['apparent_surface_area'])
 
-capacitance_SI =  - data['charge_SI'] / potential_bias
-capacitance_per_real_surface_area_SI = capacitance_SI / data['real_surface_area_SI']
-capacitance_per_apparent_surface_area_SI = capacitance_SI / data['apparent_surface_area_SI']
+capacitance = - data['charge'] / potential_bias
+capacitance_per_real_surface_area = capacitance / data['real_surface_area']
+capacitance_per_apparent_surface_area = capacitance / data['apparent_surface_area']
 
-roughness_function = capacitance_SI / data["gouy_chapman_capacitance_SI"]
+capacitance_SI = faraday_constant*I*debye_length**3/thermal_voltage * capacitance
+capacitance_per_real_surface_area_SI = (faraday_constant*I*debye_length/thermal_voltage) * capacitance_per_real_surface_area
+capacitance_per_apparent_surface_area_SI = (faraday_constant*I*debye_length/thermal_voltage) * capacitance_per_apparent_surface_area
+
+roughness_function = capacitance_per_apparent_surface_area / data["gouy_chapman_capacitance_per_area"]
 
 data.update({
-    **{f'amount_of_substance_per_real_surface_area_SI_{i}': amount_of_substance_per_real_surface_area_SI[i] for i in range(number_of_species)},
-    **{f'amount_of_substance_per_apparent_surface_area_SI_{i}': amount_of_substance_per_apparent_surface_area_SI[i] for i in range(number_of_species)},
+    **{f'amount_of_substance_per_real_surface_area_{i}': amount_of_substance_per_real_surface_area[i] for i in range(number_of_species)},
+    **{f'amount_of_substance_per_apparent_surface_area_{i}': amount_of_substance_per_apparent_surface_area[i] for i in range(number_of_species)},
+    'capacitance': capacitance,
+    'capacitance_per_real_surface_area': capacitance_per_real_surface_area,
+    'capacitance_per_apparent_surface_area': capacitance_per_apparent_surface_area,
     'capacitance_SI': capacitance_SI,
     'capacitance_per_real_surface_area_SI': capacitance_per_real_surface_area_SI,
     'capacitance_per_apparent_surface_area_SI': capacitance_per_apparent_surface_area_SI,

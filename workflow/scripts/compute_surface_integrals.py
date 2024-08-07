@@ -5,13 +5,13 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-debye_length = config["debye_length"]
-potential_bias = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]
+temperature = config["temperature"]
+relative_permittivity = config["relative_permittivity"]
 
-dimensional_solution_checkpoint_bp = input.dimensional_solution_checkpoint_bp
+checkpoint_bp = input.interpolated_solution_checkpoint_bp
 
 import logging
 
@@ -25,11 +25,20 @@ import dolfinx
 import ufl
 import adios4dolfinx
 
+import numpy as np
 import scipy.constants as sc
 
 from mpi4py import MPI
 
-mesh = adios4dolfinx.read_mesh(dimensional_solution_checkpoint_bp,
+from utils import ionic_strength, lambda_D
+
+faraday_constant = sc.value('Faraday constant')
+
+I = ionic_strength(z=number_charges, c=reference_concentrations)
+
+debye_length = lambda_D(ionic_strength=I, temperature=temperature, relative_permittivity=relative_permittivity)
+
+mesh = adios4dolfinx.read_mesh(checkpoint_bp,
                                comm=MPI.COMM_WORLD,
                                engine="BP4", ghost_mode=dolfinx.mesh.GhostMode.none)
 
@@ -41,46 +50,58 @@ concentration_functions = [dolfinx.fem.Function(scalar_function_space_CG1,
                                           dtype=dolfinx.default_scalar_type) for _ in range(number_of_species)]
 
 adios4dolfinx.read_function(
-        filename=input.dimensional_solution_checkpoint_bp,
-        u=potential_function, name="potential")
+        filename=checkpoint_bp,
+        u=potential_function, name="solution_function_0")
 
 for i in range(number_of_species):
     adios4dolfinx.read_function(
-        filename=input.dimensional_solution_checkpoint_bp,
-        u=concentration_functions[i], name=f"concentration_{i}")
+        filename=checkpoint_bp,
+        u=concentration_functions[i], name=f"solution_function_{i+1}")
 
-faraday_constant = sc.value('Faraday constant')
+# faraday_constant = sc.value('Faraday constant')
 
-charge_density_SI = 0
+# dimensional charge density
+#
+# \begin{equation*}
+#     \rho = F \cdot \sum_{i=1}^{M} z_i c_i = F I \cdot \sum_{i=1}^{M} z_i c_i^* = F I \rho^{*}
+# \end{equation*}
+#
+# vs
+#
+# dimensionless charge density
+#
+# \begin{equation*}
+#     \rho^{*} = \sum_{i=1}^{M} z_i c_i^*
+# \end{equation*}
+
+charge_density = 0
 for i in range(number_of_species):
-    charge_density_SI += faraday_constant*number_charges[i]*concentration_functions[i]
+    charge_density += number_charges[i]*concentration_functions[i]
 
-charge_SI_expression = dolfinx.fem.form(charge_density_SI * ufl.dx)
-charge_SI_local = dolfinx.fem.assemble_scalar(charge_SI_expression)
-charge_SI = mesh.comm.allreduce(charge_SI_local, op=MPI.SUM)
+charge_expression = dolfinx.fem.form(charge_density * ufl.dx)
+charge_local = dolfinx.fem.assemble_scalar(charge_expression)
+charge = mesh.comm.allreduce(charge_local, op=MPI.SUM)
 
-amount_of_substance_SI = []
+# dimensional vs dimensionless charge
+#
+# \begin{equation*}
+#     Q = F I \lambda_D^3 \int_{A^{*}} \rho^*\, \mathrm{d}A^*
+# \end{equation*}
+#
+charge_SI = faraday_constant*I*debye_length**3*charge
+
+amount_of_substance = []
 for i in range(number_of_species):
-    amount_of_substance_SI_expression = dolfinx.fem.form(concentration_functions[i]* ufl.dx)
-    amount_of_substance_SI_local = dolfinx.fem.assemble_scalar(amount_of_substance_SI_expression)
-    amount_of_substance_SI.append(mesh.comm.allreduce(amount_of_substance_SI_local, op=MPI.SUM))
+    amount_of_substance_expression = dolfinx.fem.form(concentration_functions[i]* ufl.dx)
+    amount_of_substance_local = dolfinx.fem.assemble_scalar(amount_of_substance_expression)
+    amount_of_substance.append(mesh.comm.allreduce(amount_of_substance_local, op=MPI.SUM))
 
 data = {
             'profile': wildcards.profile,
+            'charge': charge,
             'charge_SI': charge_SI,
-            **{f'amount_of_substance_SI_{i}': amount_of_substance_SI[i] for i in range(number_of_species)}
+            **{f'amount_of_substance_{i}': amount_of_substance[i] for i in range(number_of_species)}
        }
 
 with open(output.json_file, 'w') as json_file:
     json.dump(data, json_file, indent=4)
-
-# compute 1d reference solution
-# pnp_1d = PoissonNernstPlanckSystemFEniCSx(c=c, z=z, delta_u=delta_u, L=L, N=1000)
-# pnp_1d.use_standard_interface_bc()
-#
-# potential_ref_normalized, concentrations_ref_normalized, _ = pnp_1d.solve()
-#
-# x_ref_unitless = pnp_1d.grid_dimensionless
-#
-# for i, c_ref_normalized in enumerate(concentrations_ref_normalized):
-#     N_excess_ref = np.trapz(c_ref_normalized-1., x_ref_unitless)

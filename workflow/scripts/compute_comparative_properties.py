@@ -12,28 +12,27 @@ import json
 with open(input.json_file, 'r') as file:
     data = json.load(file)
 
-
 with open(input.reference_json_file, 'r') as file:
     reference_data = json.load(file)
 
-d_amount_of_substance_per_real_surface_area_SI = []
-d_amount_of_substance_per_apparent_surface_area_SI = []
+d_amount_of_substance_per_real_surface_area = []
+d_amount_of_substance_per_apparent_surface_area = []
 for i in range(number_of_species):
-    d_amount_of_substance_per_real_surface_area_SI.append(
-        data[f'amount_of_substance_per_real_surface_area_SI_{i}']
-        - reference_data[f'amount_of_substance_per_real_surface_area_SI_{i}'])
-    d_amount_of_substance_per_apparent_surface_area_SI.append(
-        data[f'amount_of_substance_per_apparent_surface_area_SI_{i}']
-        - reference_data[f'amount_of_substance_per_apparent_surface_area_SI_{i}'])
+    d_amount_of_substance_per_real_surface_area.append(
+        data[f'amount_of_substance_per_real_surface_area_{i}']
+        - reference_data[f'amount_of_substance_per_real_surface_area_{i}'])
+    d_amount_of_substance_per_apparent_surface_area.append(
+        data[f'amount_of_substance_per_apparent_surface_area_{i}']
+        - reference_data[f'amount_of_substance_per_apparent_surface_area_{i}'])
 
-d_capacitance_per_real_surface_area_SI = data['capacitance_per_real_surface_area_SI'] - reference_data['capacitance_per_real_surface_area_SI']
-d_capacitance_per_apparent_surface_area_SI = data['capacitance_per_apparent_surface_area_SI'] - reference_data['capacitance_per_apparent_surface_area_SI']
+d_capacitance_per_real_surface_area = data['capacitance_per_real_surface_area'] - reference_data['capacitance_per_real_surface_area']
+d_capacitance_per_apparent_surface_area = data['capacitance_per_apparent_surface_area'] - reference_data['capacitance_per_apparent_surface_area']
 
 data.update({
-    **{f'd_amount_of_substance_per_real_surface_area_SI_{i}': d_amount_of_substance_per_real_surface_area_SI[i] for i in range(number_of_species)},
-    **{f'd_amount_of_substance_per_apparent_surface_area_SI_{i}': d_amount_of_substance_per_apparent_surface_area_SI[i] for i in range(number_of_species)},
-    'd_capacitance_per_real_surface_area_SI': d_capacitance_per_real_surface_area_SI,
-    'd_capacitance_per_apparent_surface_area_SI': d_capacitance_per_apparent_surface_area_SI,
+    **{f'd_amount_of_substance_per_real_surface_area_{i}': d_amount_of_substance_per_real_surface_area[i] for i in range(number_of_species)},
+    **{f'd_amount_of_substance_per_apparent_surface_area_{i}': d_amount_of_substance_per_apparent_surface_area[i] for i in range(number_of_species)},
+    'd_capacitance_per_real_surface_area': d_capacitance_per_real_surface_area,
+    'd_capacitance_per_apparent_surface_area': d_capacitance_per_apparent_surface_area,
 })
 
 with open(output.json_file, 'w') as json_file:

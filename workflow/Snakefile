@@ -103,13 +103,24 @@ rule scale:
 
 rule compute_surface_integrals:
      input:
-        dimensional_solution_checkpoint_bp=f"{out_prefix}/solutions/{{profile}}.bp"
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
      output:
         json_file=f"{out_prefix}/surface_integrals/{{profile}}.json"
      log:
         f"{out_prefix}/logs/040_compute_surface_integrals/{{profile}}.log"
      script:
         "scripts/compute_surface_integrals.py"
+
+rule compute_surface_charge:
+    input:
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp",
+    output:
+        json_file = f"{out_prefix}/surface_charge/{{profile}}.json"
+    log:
+        f"{out_prefix}/logs/041_compute_surface_charge/{{profile}}.log"
+    script:
+        "scripts/compute_surface_charge.py"
+
 
 rule compute_line_integrals:
     input:
@@ -135,6 +146,7 @@ rule plot_line_integrals:
 
 rule compute_derived_properties:
     input:
+        surface_charge_json_file= f"{out_prefix}/surface_charge/{{profile}}.json",
         surface_integrals_json_file=f"{out_prefix}/surface_integrals/{{profile}}.json",
         profile_properties_json_file=f"{out_prefix}/profile_properties/{{profile}}.json"
     output:
@@ -160,6 +172,24 @@ rule aggregate_surface_integrals:
         expand(f"{out_prefix}/surface_integrals/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/surface_integrals/surface_integrals.csv"
+    run:
+        import json
+        import pandas as pd
+
+        data_records = []
+        for json_file in input:
+            with open(json_file, 'r') as file:
+                data = json.load(file)
+            data_records.append(data)
+
+        df = pd.DataFrame.from_records(data_records)
+        df.to_csv(output.csv_file)
+
+rule aggregate_surface_charges:
+    input:
+        expand(f"{out_prefix}/surface_charge/{{profile}}.json", profile=profile_labels)
+    output:
+        csv_file=f"{out_prefix}/surface_charge/surface_charge.csv"
     run:
         import json
         import pandas as pd
@@ -220,7 +250,7 @@ rule plot:
         import seaborn as sns
 
         df = pd.read_csv(input.csv_file)
-        sns_plot = sns.scatterplot(data=df, x="profile", y="charge_SI", hue="profile", style="profile")
+        sns_plot = sns.scatterplot(data=df, x="profile", y="charge", hue="profile", style="profile")
         sns_plot.set_xticklabels(sns_plot.get_xticklabels(), rotation=45, horizontalalignment='right')
         # plt.gcf().set_size_inches(10, 6)
         fig = sns_plot.get_figure()
@@ -263,3 +293,4 @@ rule default:
         f"{out_prefix}/comparative_plots"
         # expand(f"{out_prefix}/surface_integrals/{{profile}}.json",  profile=profile_labels)
     default_target: True
+

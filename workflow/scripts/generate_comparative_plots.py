@@ -16,25 +16,33 @@ import seaborn as sns
 
 properties_per_species = [p.format(i)
     for i in range(number_of_species) for p in [
-        "amount_of_substance_SI_{}",
-        "amount_of_substance_per_real_surface_area_SI_{}",
-        "amount_of_substance_per_apparent_surface_area_SI_{}",
-        "d_amount_of_substance_per_real_surface_area_SI_{}",
-        "d_amount_of_substance_per_apparent_surface_area_SI_{}"]
+        "amount_of_substance_{}",
+        "amount_of_substance_per_real_surface_area_{}",
+        "amount_of_substance_per_apparent_surface_area_{}",
+        "d_amount_of_substance_per_real_surface_area_{}",
+        "d_amount_of_substance_per_apparent_surface_area_{}"]
 ]
 
 properties = [
+    "charge",
+    "surface_charge",
+    "apparent_surface_area",
+    "real_surface_area",
+    "geometrical_roughness_factor",
+    "gouy_chapman_capacitance_per_area",
+    "capacitance",
+    "capacitance_per_real_surface_area",
+    "capacitance_per_apparent_surface_area",
+    "roughness_function",
+    "d_capacitance_per_real_surface_area",
+    "d_capacitance_per_apparent_surface_area",
     "charge_SI",
     "apparent_surface_area_SI",
     "real_surface_area_SI",
-    "geometrical_roughness_factor",
-    "gouy_chapman_capacitance_SI",
     "capacitance_SI",
+    "gouy_chapman_capacitance_per_area_SI",
     "capacitance_per_real_surface_area_SI",
     "capacitance_per_apparent_surface_area_SI",
-    "roughness_function",
-    "d_capacitance_per_real_surface_area_SI",
-    "d_capacitance_per_apparent_surface_area_SI",
     *properties_per_species
 ]
 

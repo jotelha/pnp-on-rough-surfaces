@@ -13,12 +13,16 @@ number_of_species = config["number_of_species"]
 
 mesh_msh = input.mesh_msh
 
+solution_checkpoint_bp = output.solution_checkpoint_bp
+
 import logging
 
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+import numpy as np
 import adios4dolfinx
+import dolfinx.mesh
 from matscipy.electrochemistry.poisson_nernst_planck_solver_2d_fenicsx import PoissonNernstPlanckSystemFEniCSx2d
 
 # define desired system
@@ -36,5 +40,26 @@ pnp_2d.apply_potential_dirichlet_bc(0.0, 2)
 
 pnp_2d.solve()
 
-adios4dolfinx.write_mesh(output.solution_checkpoint_bp, pnp_2d.mesh)
-adios4dolfinx.write_function(filename=output.solution_checkpoint_bp, u=pnp_2d.w, name="solution")
+adios4dolfinx.write_mesh(solution_checkpoint_bp, pnp_2d.mesh)
+adios4dolfinx.write_function(filename=solution_checkpoint_bp, u=pnp_2d.w, name="solution")
+
+# write mesh tags
+meshtags = {}
+for i in range(pnp_2d.mesh.topology.dim + 1):
+    e_map = pnp_2d.mesh.topology.index_map(i)
+    # Compute midpoints of entities
+    entities = np.arange(e_map.size_local, dtype=np.int32)
+
+    # Associate each local index with its global index
+    values = np.arange(e_map.size_local, dtype=np.int32) + e_map.local_range[0]
+
+    meshtags[i] = dolfinx.mesh.meshtags(pnp_2d.mesh, i, entities, values)
+
+for i, tag in meshtags.items():
+    adios4dolfinx.write_meshtags(filename=solution_checkpoint_bp,
+                                 mesh=pnp_2d.mesh, meshtags=tag, meshtag_name=f"meshtags_{i}")
+
+adios4dolfinx.write_meshtags(filename=solution_checkpoint_bp,
+                             mesh=pnp_2d.mesh, meshtags=pnp_2d.facet_markers, meshtag_name="facet_markers")
+adios4dolfinx.write_meshtags(filename=solution_checkpoint_bp,
+                             mesh=pnp_2d.mesh, meshtags=pnp_2d.cell_markers, meshtag_name="cell_markers")
