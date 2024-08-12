@@ -103,7 +103,7 @@ rule scale:
 
 rule compute_surface_integrals:
      input:
-        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
      output:
         json_file=f"{out_prefix}/surface_integrals/{{profile}}.json"
      log:
@@ -113,7 +113,7 @@ rule compute_surface_integrals:
 
 rule compute_surface_charge:
     input:
-        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp",
+        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp",
     output:
         json_file = f"{out_prefix}/surface_charge/{{profile}}.json"
     log:
@@ -124,11 +124,9 @@ rule compute_surface_charge:
 
 rule compute_line_integrals:
     input:
-        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp",
+        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp",
         mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
     output:
-        # *[f"{out_prefix}/line_integrals/{{profile}}_concentration_{i}.csv" for i in range(number_of_species)],
-        concentration_profile_directory=directory(f"{out_prefix}/line_integrals/{{profile}}_concentration_profiles"),
         integrals_csv=f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
     log:
         f"{out_prefix}/logs/042_compute_line_integrals/{{profile}}.log"
@@ -246,7 +244,6 @@ rule plot:
         png_file=f"{out_prefix}/surface_integrals/surface_integrals.png"
     run:
         import pandas as pd
-        import matplotlib.pyplot as plt
         import seaborn as sns
 
         df = pd.read_csv(input.csv_file)

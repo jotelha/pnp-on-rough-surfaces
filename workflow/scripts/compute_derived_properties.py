@@ -5,7 +5,7 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-potential_bias = config["potential_bias"]
+potential_bias_SI = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]
@@ -27,6 +27,8 @@ gas_constant = sc.value('molar gas constant')
 faraday_constant = sc.value('Faraday constant')
 
 thermal_voltage = gas_constant * temperature / faraday_constant
+
+potential_bias = potential_bias_SI / thermal_voltage
 
 with open(input.surface_charge_json_file, 'r') as file:
     surface_charge_data = json.load(file)

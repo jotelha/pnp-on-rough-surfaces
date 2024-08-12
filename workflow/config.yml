@@ -16,6 +16,9 @@ height_normalized: 10  # debye lengths
 lower_boundary_mesh_size: 0.2  # debye lengths
 upper_boundary_mesh_size: 1.0  # debye lengths
 
+line_integral_rolling_mean_window: 500
+line_integral_rolling_mean_window_std: 100
+
 reference_profile_label: rectangle_flat_from_vertical
 
 profiles:

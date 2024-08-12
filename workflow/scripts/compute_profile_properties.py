@@ -5,7 +5,7 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-potential_bias = config["potential_bias"]
+potential_bias_SI = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]
@@ -34,8 +34,12 @@ faraday_constant = sc.value('Faraday constant')
 
 I = ionic_strength(z=number_charges, c=reference_concentrations)
 
-debye_length = lambda_D(ionic_strength=I, temperature=temperature,
+debye_length_SI = lambda_D(ionic_strength=I, temperature=temperature,
                         relative_permittivity=relative_permittivity)
+
+thermal_voltage = gas_constant * temperature / faraday_constant
+
+potential_bias = potential_bias_SI / thermal_voltage
 
 x_input, y_input = np.loadtxt(profile_csv,
                           skiprows=profile_config["skiprows"],
@@ -47,8 +51,8 @@ x_input, y_input = np.loadtxt(profile_csv,
 x_dimensional = x_input
 y_dimensional = y_input
 
-x_normalized = x_dimensional * profile_config["xscale"] / debye_length
-y_normalized = y_dimensional * profile_config["yscale"] / debye_length
+x_normalized = x_dimensional * profile_config["xscale"] / debye_length_SI
+y_normalized = y_dimensional * profile_config["yscale"] / debye_length_SI
 
 dx = np.mean(x_normalized[1:]-x_normalized[:-1])
 
@@ -68,7 +72,7 @@ x_extended = np.array([x0, *x_zero_aligned, x1])
 y_extended = np.array([0, *y_zero_aligned, 0])
 
 apparent_surface_area = x_extended[-1] - x_extended[0]
-apparent_surface_area_SI = apparent_surface_area*debye_length
+apparent_surface_area_SI = apparent_surface_area*debye_length_SI
 logger.info("apparent_surface_area: %g", apparent_surface_area)
 logger.info("apparent_surface_area_SI: %g", apparent_surface_area_SI)
 
@@ -84,7 +88,7 @@ logger.info("max(segment_lengths): %g", np.max(segment_lengths))
 logger.info("min(segment_lengths): %g", np.min(segment_lengths))
 
 real_surface_area = np.sum(segment_lengths)
-real_surface_area_SI = real_surface_area*debye_length
+real_surface_area_SI = real_surface_area*debye_length_SI
 
 logger.info("real_surface_area: %g", real_surface_area)
 logger.info("real_surface_area_SI: %g", real_surface_area_SI)
@@ -94,12 +98,12 @@ geometrical_roughness_factor = real_surface_area / apparent_surface_area
 logger.info("geometrical_roughness_factor: %g", geometrical_roughness_factor)
 
 gouy_chapman_capacitance_per_area_SI = (
-        relative_permittivity*vacuum_permittivity/debye_length*np.cosh(
-            faraday_constant*potential_bias/(2*gas_constant*temperature)))
+        relative_permittivity*vacuum_permittivity/debye_length_SI*np.cosh(
+            faraday_constant*potential_bias_SI/(2*gas_constant*temperature)))
 logger.info("gouy_chapman_capacitance_per_area_SI: %g", gouy_chapman_capacitance_per_area_SI)
 
 gouy_chapman_capacitance_per_area = (
-        gas_constant * temperature / (np.square(faraday_constant) * I * debye_length)
+        gas_constant * temperature / (np.square(faraday_constant) * I * debye_length_SI)
         * gouy_chapman_capacitance_per_area_SI
 )
 logger.info("gouy_chapman_capacitance_per_area: %g", gouy_chapman_capacitance_per_area)
@@ -111,8 +115,16 @@ data = {
             'real_surface_area': real_surface_area,
             'real_surface_area_SI': real_surface_area_SI,
             'geometrical_roughness_factor': geometrical_roughness_factor,
+            'thermal_voltage': 1,
+            'thermal_voltage_SI': thermal_voltage,
+            'debye_length': 1,
+            'debye_length_SI': debye_length_SI,
+            'potential_bias': potential_bias,
+            'potential_bias_SI': potential_bias_SI,
             'gouy_chapman_capacitance_per_area': gouy_chapman_capacitance_per_area,
-            'gouy_chapman_capacitance_per_area_SI': gouy_chapman_capacitance_per_area_SI
+            'gouy_chapman_capacitance_per_area_SI': gouy_chapman_capacitance_per_area_SI,
+            **{f'reference_concentration_{i}': 1 for i in range(number_of_species)},
+            **{f'reference_concentration_{i}_SI': reference_concentrations[i] for i in range(number_of_species)},
        }
 
 with open(output.json_file, 'w') as json_file:

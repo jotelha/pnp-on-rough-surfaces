@@ -11,7 +11,9 @@ number_of_species = config["number_of_species"]
 temperature = config["temperature"]
 relative_permittivity = config["relative_permittivity"]
 
-checkpoint_bp = input.interpolated_solution_checkpoint_bp
+checkpoint_bp = input.solution_checkpoint_bp
+
+json_file = output.json_file
 
 import logging
 
@@ -36,27 +38,30 @@ faraday_constant = sc.value('Faraday constant')
 
 I = ionic_strength(z=number_charges, c=reference_concentrations)
 
+logger.info("Ionic strength: %g.", I)
+
 debye_length = lambda_D(ionic_strength=I, temperature=temperature, relative_permittivity=relative_permittivity)
+
+logger.info("Debye length: %g.", debye_length)
 
 mesh = adios4dolfinx.read_mesh(checkpoint_bp,
                                comm=MPI.COMM_WORLD,
                                engine="BP4", ghost_mode=dolfinx.mesh.GhostMode.none)
 
-single_element_CG1 = basix.ufl.element("Lagrange", mesh.basix_cell(), 1)
-scalar_function_space_CG1 = dolfinx.fem.functionspace(mesh, single_element_CG1)
-potential_function = dolfinx.fem.Function(scalar_function_space_CG1,
-                                          dtype=dolfinx.default_scalar_type)
-concentration_functions = [dolfinx.fem.Function(scalar_function_space_CG1,
-                                          dtype=dolfinx.default_scalar_type) for _ in range(number_of_species)]
+single_element = basix.ufl.element('Lagrange', mesh.basix_cell(), 3)
+elements = [single_element] * (1+number_of_species)
+mixed_element = basix.ufl.mixed_element(elements)
+function_space = dolfinx.fem.functionspace(mesh, mixed_element)
 
-adios4dolfinx.read_function(
-        filename=checkpoint_bp,
-        u=potential_function, name="solution_function_0")
+solution_function = dolfinx.fem.Function(function_space)
 
-for i in range(number_of_species):
-    adios4dolfinx.read_function(
-        filename=checkpoint_bp,
-        u=concentration_functions[i], name=f"solution_function_{i+1}")
+logger.info("Read function from file '%s'.", checkpoint_bp)
+adios4dolfinx.read_function(filename=checkpoint_bp, u=solution_function, name="solution")
+
+solution_functions = solution_function.split()
+
+potential_function = solution_functions[0]
+concentration_functions = solution_functions[1:]
 
 # faraday_constant = sc.value('Faraday constant')
 
@@ -103,5 +108,5 @@ data = {
             **{f'amount_of_substance_{i}': amount_of_substance[i] for i in range(number_of_species)}
        }
 
-with open(output.json_file, 'w') as json_file:
+with open(json_file, 'w') as json_file:
     json.dump(data, json_file, indent=4)
