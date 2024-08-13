@@ -265,7 +265,7 @@ rule generate_comparative_plots:
 
 rule plot_solution_2d:
     input:
-        dimensional_solution_checkpoint_bp=f"{out_prefix}/solutions/{{profile}}.bp"
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
     output:
         *[f"{out_prefix}/plot_solution_2d/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
         potential_png=f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",
