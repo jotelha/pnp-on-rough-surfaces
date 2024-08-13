@@ -8,13 +8,22 @@ config = snakemake.config
 logfile = snakemake.log[0]
 
 number_of_species = config["number_of_species"]
-
+temperature = config["temperature"]
+potential_bias_SI = config["potential_bias"]
 checkpoint_bp = input.interpolated_solution_checkpoint_bp
 
 import logging
 
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+import scipy.constants as sc
+
+gas_constant = sc.value('molar gas constant')
+faraday_constant = sc.value('Faraday constant')
+
+thermal_voltage = gas_constant * temperature / faraday_constant
+potential_bias = potential_bias_SI / thermal_voltage
 
 import basix
 import dolfinx
@@ -64,7 +73,8 @@ grid.set_active_scalars("potential")
 
 grid = grid.clip(normal=(0, 1, 0), origin=(0, 7, 0))
 
-contour_values = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]
+# contour_values = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]
+contour_values = np.geomspace(0.01*potential_bias, 0.9*potential_bias, num=8)
 contours = grid.contour(isosurfaces=contour_values)
 
 logger.info("Plot potential.")
@@ -86,7 +96,6 @@ lower_edge_center = [
     (bounds[4] + bounds[5]) / 2   # Z center (to stay in the middle Z plane)
 ]
 
-print(lower_edge_center)
 # Adjust camera focal point to the lower edge center
 plotter.camera.focal_point = lower_edge_center
 
@@ -111,18 +120,46 @@ for i, concentration_function in enumerate(concentration_functions):
     grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
     grid.point_data["concentration"] = concentration_function.x.array.real
     grid.set_active_scalars("concentration")
+
+    grid = grid.clip(normal=(0, 1, 0), origin=(0, 7, 0))
+
+    # contour_values = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]
+    # contours = grid.contour(isosurfaces=contour_values)
+
     logger.info("Plot concentration %d.", i)
     plotter = pyvista.Plotter()
-    plotter.add_mesh(grid, show_edges=False)
-    plotter.set_scale(xscale=0.1, yscale=10)
-    plotter.view_xy()
-    # plotter.camera.zoom(20)
-    # plotter.camera.position = plotter.camera.position * np.array([1.,0.5,1.])
-    # print(plotter.camera.position)
-    plotter.camera.position = (plotter.camera.position[0],
-                               - plotter.camera.position[1]*2,
-                               plotter.camera.position[2])
 
+    plotter.add_mesh(grid, show_edges=False)
+    # plotter.add_mesh(contours, line_width=2, render_lines_as_tubes=True, color='r')
+    plotter.view_xy()
+
+    xscale = 0.05
+
+    plotter.set_scale(xscale=xscale)
+
+    bounds = grid.bounds
+
+    # Calculate the lower edge center in the XY plane (Z = 0)
+    lower_edge_center = [
+        (bounds[0] + bounds[1]) / 2 * xscale * 1.2,  # X center
+        bounds[2] + 2,  # Y at the lower bound
+        (bounds[4] + bounds[5]) / 2  # Z center (to stay in the middle Z plane)
+    ]
+
+    # Adjust camera focal point to the lower edge center
+    plotter.camera.focal_point = lower_edge_center
+
+    # Position the camera to look straight down on the XY plane
+    # Keep the camera at a height above the grid
+    camera_position = [
+        lower_edge_center[0],  # X position
+        lower_edge_center[1],  # Y position
+        lower_edge_center[2] + 15  # Z position (height above the plane)
+    ]
+
+    plotter.camera.position = camera_position
+
+    plotter.show_axes()
     plotter.show()
     logger.info("Dump concentration %i plot to %s.", i, output[i])
     plotter.screenshot(output[i])
