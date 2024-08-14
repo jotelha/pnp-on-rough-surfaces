@@ -133,6 +133,24 @@ rule compute_line_integrals:
     script:
         "scripts/compute_line_integrals.py"
 
+rule gpr_on_line_integrals:
+    input:
+        csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+    output:
+        ELBO_histogram_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/ELBO_histogram.png",
+        minibatch_speedup_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/minibatch_speedup.png",
+        predictions_before_training_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predictions_before_training.png",
+        convergence_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/convergence.png",
+        predictions_after_training_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predictions_after_training.png",
+        X_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/X.txt",
+        predicted_Y_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predicted_Y.txt",
+        predicted_variance_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predicted_variance.txt",
+        model_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/model.txt",
+    log:
+        f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/gpr_on_line_integrals.log"
+    script:
+        "scripts/gpr_on_line_integrals.py"
+
 rule plot_line_integrals:
     input:
         csv_file=f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
@@ -276,6 +294,7 @@ rule plot_solution_2d:
 
 rule single_result:
     input:
+        f"{out_prefix}/line_integrals/{profile_labels[0]}_excess_concentration_integral_0_gpr/model.txt",
         f"{out_prefix}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
 rule default:
