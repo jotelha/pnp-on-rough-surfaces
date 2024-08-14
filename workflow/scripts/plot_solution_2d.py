@@ -167,7 +167,7 @@ annotations = {
 
 plotter.add_mesh(grid, show_edges=False,
                  scalar_bar_args={
-                     'title': 'potential $(U_T)$',
+                     'title': '                     potential $(U_T)$',
                      'title_font_size': 16,
                      'label_font_size': 14,
                      'n_labels': 0,
@@ -175,7 +175,7 @@ plotter.add_mesh(grid, show_edges=False,
                      #'shadow': True,
                      # 'color': 'white',  # Color of the labels and title
                      'vertical': True,  # Orientation of the colorbar
-                     'position_x': 0.83,  # Position of the colorbar in the plot (x-coordinates)
+                     'position_x': 0.77,  # Position of the colorbar in the plot (x-coordinates)
                      'position_y': 0.2,  # Position of the colorbar in the plot (y-coordinates)
                      'width': 0.08,      # Width of the colorbar
                      'height': 0.5,      # Height of the colorbar
@@ -183,7 +183,10 @@ plotter.add_mesh(grid, show_edges=False,
                  annotations=annotations)
 
 scalar_bar = plotter.scalar_bar
-print(scalar_bar)
+scalar_bar.SetTextPosition(-1)
+title_text_property = scalar_bar.GetTitleTextProperty()
+title_text_property.SetJustificationToRight()
+title_text_property.SetLineOffset(10)
 
 logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
 #plotter.add_point_labels(
