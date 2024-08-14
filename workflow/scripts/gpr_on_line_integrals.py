@@ -31,7 +31,6 @@ import numpy as np
 import time
 import gpflow
 import tensorflow as tf
-from gpflow.ci_utils import ci_niter
 
 
 
@@ -50,7 +49,7 @@ subset_slice = (slice(None),slice(None)) # all
 nb_points = 201
 length_scale_l = [100, 0.3]
 signal_variance_l = [1., 1.]
-interval = [0, 50.]
+interval = [np.min(df["x"]), np.max(df["x"])]
 
 # noise_variance_l = [13.1**2, 0.42**2]
 noise_variance = 0.42**2
@@ -59,7 +58,7 @@ def plot(title=""):
     plt.figure(figsize=None)
     plt.title(title)
     pX = np.linspace(interval[0], interval[1], nb_points)[:, None]
-    pY, pYv = m.predict_y(pX)  # Predict Y values at test locations
+    pY, pYv = m.predict_y(pX)
     plt.plot(X, Y, "x", label="Training points", alpha=0.2)
     (line,) = plt.plot(pX, pY, lw=1.5, label="Mean of predictive posterior")
     col = line.get_color()
@@ -76,30 +75,6 @@ def plot(title=""):
     plt.legend(loc="lower right")
 
 
-def run_adam(model, iterations):
-    """
-    Utility function running the Adam optimizer
-
-    :param model: GPflow model
-    :param interations: number of iterations
-    """
-    # Create an Adam Optimizer action
-    logf = []
-    train_iter = iter(train_dataset.batch(minibatch_size))
-    training_loss = model.training_loss_closure(train_iter, compile=True)
-    optimizer = tf.optimizers.Adam()
-
-    @tf.function
-    def optimization_step():
-        optimizer.minimize(training_loss, model.trainable_variables)
-
-    for step in range(iterations):
-        optimization_step()
-        if step % 10 == 0:
-            elbo = -training_loss().numpy()
-            logf.append(elbo)
-    return logf
-
 # for y_value_label, directory in zip(y_value_labels_l, directories):
 x_values = df["x"]
 y_values = df[y_value_label]
@@ -108,8 +83,8 @@ y_mean = y_values.mean()
 y_values -= y_mean
 logger.info(f"Removed mean {y_mean}.")
 
-y_values_T = y_values.reshape(-1, 1)
-x_values_T = x_values.reshape(-1, 1)
+y_values_T = y_values.values.reshape(-1, 1)
+x_values_T = x_values.values.reshape(-1, 1)
 
 # shuffle input values
 data = np.hstack([x_values_T, y_values_T])
@@ -139,19 +114,19 @@ tensor_data = tuple(map(tf.convert_to_tensor, data))
 elbo(tensor_data)  # run it once to trace & compile
 
 minibatch_size = 100
-train_dataset = tf.data.Dataset.from_tensor_slices((X, Y)).repeat().shuffle(N)
+train_dataset = tf.data.Dataset.from_tensor_slices((X, Y)).repeat().shuffle(N).batch(minibatch_size)
 
-train_iter = iter(train_dataset.batch(minibatch_size))
-ground_truth = elbo(tensor_data).numpy()
+# ELBO computation with minibatches
+ground_truth = m.elbo((X, Y)).numpy()
+evals = [m.elbo(next(iter(train_dataset))).numpy() for _ in range(100)]
 
-evals = [elbo(minibatch).numpy() for minibatch in itertools.islice(train_iter, 100)]
 plt.figure(figsize=None)
 plt.hist(evals, label="Minibatch estimations")
 plt.axvline(ground_truth, c="k", label="Ground truth")
 plt.axvline(np.mean(evals), c="g", ls="--", label="Minibatch mean")
 plt.legend()
 plt.title("Histogram of ELBO evaluations using minibatches")
-print("Discrepancy between ground truth and minibatch estimate:", ground_truth - np.mean(evals))
+logger.info("Discrepancy between ground truth and minibatch estimate: %g", ground_truth - np.mean(evals))
 
 plt.savefig(ELBO_histogram_png)
 
@@ -188,9 +163,25 @@ minibatch_size = 100
 # We turn off training for inducing point locations
 # gpflow.set_trainable(m.inducing_variable, False)
 
-maxiter = ci_niter(50000)
+maxiter = 50000
 
-logf = run_adam(m, maxiter)
+@tf.function
+def optimization_step():
+    with tf.GradientTape() as tape:
+        loss = m.training_loss((X, Y))
+    gradients = tape.gradient(loss, m.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, m.trainable_variables))
+
+optimizer = tf.keras.optimizers.Adam()
+
+# Running the optimization
+logf = []
+for step in range(maxiter):
+    optimization_step()
+    if step % 10 == 0:
+        elbo = m.elbo((X, Y)).numpy()
+        logf.append(elbo)
+
 plt.plot(np.arange(maxiter)[::10], logf)
 plt.xlabel("iteration")
 _ = plt.ylabel("ELBO")
