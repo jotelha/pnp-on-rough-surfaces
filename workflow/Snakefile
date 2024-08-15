@@ -151,6 +151,20 @@ rule gpr_on_line_integrals:
     script:
         "scripts/gpr_on_line_integrals.py"
 
+rule plot_gpr_on_line_integrals:
+    input:
+        csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/X.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/predicted_Y.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/predicted_variance.txt" for i in range(number_of_species)],
+    output:
+        svg_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr.svg",
+        png_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr.png"
+    log:
+        f"{out_prefix}/line_integrals/{{profile}}_plot_gpr_on_line_integrals.log"
+    script:
+        "scripts/plot_gpr_on_line_integrals.py"
+
 rule plot_line_integrals:
     input:
         csv_file=f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
@@ -294,7 +308,8 @@ rule plot_solution_2d:
 
 rule single_result:
     input:
-        f"{out_prefix}/line_integrals/{profile_labels[0]}_excess_concentration_integral_0_gpr/model.txt",
+        # f"{out_prefix}/line_integrals/{profile_labels[0]}_excess_concentration_integral_0_gpr/model.txt",
+        f"{out_prefix}/line_integrals/{profile_labels[0]}_integrals_with_gpr.png",
         f"{out_prefix}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
 rule default:

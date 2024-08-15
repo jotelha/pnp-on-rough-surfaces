@@ -4,6 +4,8 @@ wildcards = snakemake.wildcards
 params = snakemake.params
 config = snakemake.config
 
+png_file = output.png_file
+
 number_of_species = config["number_of_species"]
 line_integral_rolling_mean_window = config["line_integral_rolling_mean_window"]
 line_integral_rolling_mean_window_std = config["line_integral_rolling_mean_window_std"]
