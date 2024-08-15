@@ -5,6 +5,8 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
+csv_file = input.csv_file
+
 ELBO_histogram_png = output.ELBO_histogram_png
 minibatch_speedup_png = output.minibatch_speedup_png
 predictions_before_training_png = output.predictions_before_training_png
@@ -20,10 +22,9 @@ number_of_species = config["number_of_species"]
 y_value_label = f"excess_concentration_integral_{wildcards.species}"
 
 import logging
-logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-import os.path
 import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
@@ -32,27 +33,12 @@ import time
 import gpflow
 import tensorflow as tf
 
-
-
-df = pd.read_csv(input.csv_file)
+df = pd.read_csv(csv_file)
 
 # Adapted from https://gpflow.readthedocs.io/en/master/notebooks/advanced/gps_for_big_data.html
 # permalink https://github.com/GPflow/docs/blob/e8e9bf9d401f2776050846f3372f43cb1acc5f8c/doc/source/notebooks/advanced/gps_for_big_data.ipynb
 
-# plt.style.use("ggplot")
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
-subset_slice = (slice(None),slice(None)) # all
-
-# suffix l: list, s: sample, d: distance
-nb_points = 201
-length_scale_l = [100, 0.3]
-signal_variance_l = [1., 1.]
-interval = [np.min(df["x"]), np.max(df["x"])]
-
-# noise_variance_l = [13.1**2, 0.42**2]
-noise_variance = 0.42**2
+nb_points = 1001
 
 def plot(title=""):
     plt.figure(figsize=None)
@@ -77,6 +63,9 @@ def plot(title=""):
 
 # for y_value_label, directory in zip(y_value_labels_l, directories):
 x_values = df["x"]
+
+logger.info(f"Number of data points: %d", len(x_values))
+
 y_values = df[y_value_label]
 # remove mean
 y_mean = y_values.mean()
@@ -85,6 +74,15 @@ logger.info(f"Removed mean {y_mean}.")
 
 y_values_T = y_values.values.reshape(-1, 1)
 x_values_T = x_values.values.reshape(-1, 1)
+
+# set kernel parameters
+length_scale_l = [1., 0.1]
+signal_variance_l = [10*np.var(y_values), np.var(y_values)]
+interval = [np.min(df["x"]), np.max(df["x"])]
+# noise_variance = np.var(y_values) * 0.01
+
+logger.info(f"Length scales {length_scale_l}.")
+logger.info(f"Signal variances {signal_variance_l}.")
 
 # shuffle input values
 data = np.hstack([x_values_T, y_values_T])
@@ -113,7 +111,7 @@ elbo = tf.function(m.elbo)
 tensor_data = tuple(map(tf.convert_to_tensor, data))
 elbo(tensor_data)  # run it once to trace & compile
 
-minibatch_size = 100
+minibatch_size = 50
 train_dataset = tf.data.Dataset.from_tensor_slices((X, Y)).repeat().shuffle(N).batch(minibatch_size)
 
 # ELBO computation with minibatches
@@ -163,7 +161,7 @@ minibatch_size = 100
 # We turn off training for inducing point locations
 # gpflow.set_trainable(m.inducing_variable, False)
 
-maxiter = 50000
+maxiter = 5000
 
 @tf.function
 def optimization_step():
