@@ -17,7 +17,7 @@ x_offset_factor = 1.2
 y_offset = 2
 z_offset = 15
 contour_label_x_offset = - 3.6
-contour_label_y_offset = 0.15
+contour_label_y_offset = 0.12
 
 import logging
 
@@ -31,6 +31,9 @@ faraday_constant = sc.value('Faraday constant')
 
 thermal_voltage = gas_constant * temperature / faraday_constant
 potential_bias = potential_bias_SI / thermal_voltage
+
+concentration_labels = ["$[\mathrm{H}_3\mathrm{O}^+] (c_{\mathrm{bulk}})$",
+                        "$[\mathrm{OH}^-] (c_{\mathrm{bulk}})$"]
 
 import basix
 import dolfinx
@@ -153,8 +156,8 @@ theme.font.family = 'arial'
 theme.font.color = 'black'
 
 logger.info("Plot potential.")
-# plotter = pyvista.Plotter(theme=theme)
-plotter = pyvista.Plotter()
+plotter = pyvista.Plotter(theme=theme)
+# plotter = pyvista.Plotter()
 annotations = {
     potential_bias: f"{potential_bias:.2f}",
     1: "1",
@@ -239,24 +242,6 @@ logger.info("z_offset: %g", z_offset)
 plotter.camera.focal_point = focal_point
 plotter.camera.position = camera_position
 
-# # Customize the axes
-# axes = pyvista.Axes()
-#
-# # Hide the z-axis
-# axes.actor.z_axis_visibility = False  # Hide the z-axis
-#
-# # Customize tick visibility for x and y axes if needed
-# axes.actor.x_axis_tick_visibility = True
-# axes.actor.y_axis_tick_visibility = True
-#
-# # Customize tick label properties
-# axes.actor.x_axis_tick_labels_text_property.font_size = 12
-# axes.actor.y_axis_tick_labels_text_property.font_size = 12
-#
-# # Add customized axes to the plotter
-# plotter.add_actor(axes)
-#
-
 scaled_bounds = (
     bounds[0] * xscale,
     bounds[1] * xscale,
@@ -266,16 +251,6 @@ scaled_bounds = (
     0)
 
 logger.info("Scaled bounds: %s", scaled_bounds)
-#plotter.show_bounds(
-#    bounds=scaled_bounds,
-#    xlabel='x', ylabel='y',
-#    location='origin',
-#    padding=0.01,
-#    ticks='outside',
-#    minor_ticks=True,
-#    show_zaxis=False,
-#    show_zlabels=False,
-#    yticks=[0,1,2,3,4,5])
 
 pointa = [bounds[0] * xscale, bounds[2] - 0.3, 0]
 pointb = [bounds[1] * xscale, bounds[2] - 0.3, 0]
@@ -322,46 +297,209 @@ for i, concentration_function in enumerate(concentration_functions):
     grid.point_data["concentration"] = concentration_function.x.array.real
     grid.set_active_scalars("concentration")
 
-    grid = grid.clip(normal=(0, 1, 0), origin=(0, 7, 0))
-
-    # contour_values = [1.0, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]
-    # contours = grid.contour(isosurfaces=contour_values)
-
-    logger.info("Plot concentration %d.", i)
-    plotter = pyvista.Plotter()
-    plotter.enable_parallel_projection()
-
-    plotter.add_mesh(grid, show_edges=False)
-    # plotter.add_mesh(contours, line_width=2, render_lines_as_tubes=True, color='r')
-    plotter.view_xy()
-
-    xscale = 0.05
-
-    plotter.set_scale(xscale=xscale)
-
     bounds = grid.bounds
+    logger.info("grid bounds: %s", bounds)
 
     # Calculate the lower edge center in the XY plane (Z = 0)
     focal_point = [
-        (bounds[0] + bounds[1]) / 2 * xscale * 1.2,  # X center
-        bounds[2] + 2,  # Y at the lower bound
+        (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+        bounds[2] + y_offset,  # Y at the lower bound
         (bounds[4] + bounds[5]) / 2  # Z center (to stay in the middle Z plane)
     ]
 
-    # Adjust camera focal point to the lower edge center
-    plotter.camera.focal_point = focal_point
+    logger.info("focal point: %s", focal_point)
+
+    # clip in x direction
+    upper_x_clip = focal_point[0] + 80
+    lower_x_clip = focal_point[0] - 80
+
+    upper_y_clip = focal_point[1] - y_offset + 5
+    lower_y_clip = focal_point[1] - y_offset - 1
+    clipping_box = [lower_x_clip, upper_x_clip, lower_y_clip, upper_y_clip, -1, 1]
+
+    logger.info("clipping box: %s", clipping_box)
+    grid = grid.clip_box(clipping_box, invert=False)
+
+    bounds = grid.bounds
+    logger.info("clipped grid bounds: %s", bounds)
+
+    # recompute focal point
+    focal_point = [
+        (bounds[0] + bounds[1]) / 2 * xscale,  # X center
+        bounds[2] + y_offset,  # Y at the lower bound
+        (bounds[4] + bounds[5]) / 2  # Z center (to stay in the middle Z plane)
+    ]
+    logger.info("recomputed focal point: %s", focal_point)
+
+    cmin = np.min(concentration_function.x.array.real)
+    cmax = np.max(concentration_function.x.array.real)
+    cspan = cmax - cmin
+
+    logger.info("Minimum concentration: %g", cmin)
+    logger.info("Maximum concentration: %g", cmax)
+    contour_values = np.geomspace(cmin+ 0.02 * cspan, cmin + 0.9 * cspan, num=5)
+    contours = grid.contour(isosurfaces=contour_values)
+    levels = contours.split_bodies()
+
+    # Label the contours
+    pts = []
 
     # Position the camera to look straight down on the XY plane
     # Keep the camera at a height above the grid
     camera_position = [
         focal_point[0],  # X position
         focal_point[1],  # Y position
-        focal_point[2] + 15  # Z position (height above the plane)
+        focal_point[2] + z_offset  # Z position (height above the plane)
     ]
+    logger.info("camera position: %s", focal_point)
 
+    for level, value in zip(levels, contour_values[::-1]):
+        pt = np.mean(level.points, axis=0)
+        pt[0] = (camera_position[0] + contour_label_x_offset) / xscale
+        pt[1] += contour_label_y_offset
+        pt[2] += 0.1
+        logger.info("contour %.2f: coordinates %s", value, pt)
+        pts.append(pt)
+
+    contour_labels = [f'{v:.2f}' for v in contour_values[::-1]]
+    contour_label_coordinates = np.array(pts)
+
+    logger.info("Contour labels: %s", contour_labels)
+    logger.info("Contour label coordinates: %s", contour_label_coordinates)
+
+    theme = pyvista.themes.DocumentProTheme()
+    theme.font.family = 'arial'
+    theme.font.color = 'black'
+
+    logger.info("Plot potential.")
+    plotter = pyvista.Plotter(theme=theme)
+    # plotter = pyvista.Plotter()
+    annotations = {
+        cmin+0.01*cspan: f"{cmin:.2f}",
+        cmin+0.5*cspan: f"{cmin+0.5*cspan:.2f}",
+        cmax-0.01*cspan: f"{cmax:.2f}"
+    }
+
+    plotter.add_mesh(grid, show_edges=False,
+                     scalar_bar_args={
+                         'title': f'                     {concentration_labels[i]}',
+                         'title_font_size': 16,
+                         'label_font_size': 14,
+                         'n_labels': 0,
+                         'fmt': '%.2f',
+                         # 'shadow': True,
+                         # 'color': 'white',  # Color of the labels and title
+                         'vertical': True,  # Orientation of the colorbar
+                         'position_x': 0.77,  # Position of the colorbar in the plot (x-coordinates)
+                         'position_y': 0.2,  # Position of the colorbar in the plot (y-coordinates)
+                         'width': 0.08,  # Width of the colorbar
+                         'height': 0.5,  # Height of the colorbar
+                     },
+                     annotations=annotations)
+
+    scalar_bar = plotter.scalar_bar
+    scalar_bar.SetTextPosition(-1)
+    title_text_property = scalar_bar.GetTitleTextProperty()
+    title_text_property.SetJustificationToRight()
+    title_text_property.SetLineOffset(10)
+
+    logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
+    plotter.add_mesh(contours, line_width=3, render_lines_as_tubes=True, color='w')
+    plotter.set_scale(xscale=xscale)
+    plotter.view_xy()
+
+    for label, position in zip(contour_labels, contour_label_coordinates):
+        renderer = plotter.renderer
+        camera = renderer.GetActiveCamera()
+
+        world_coords = [position[0] * xscale, position[1], position[2], 1.0]
+        logger.info(f"World coordinates: {world_coords}")
+
+        # Get the transformation matrix from world to view coordinates
+        world_to_view_transform = camera.GetCompositeProjectionTransformMatrix(renderer.GetTiledAspectRatio(), -1, 1)
+
+        # Apply the transformation
+        view_coords = [0.0, 0.0, 0.0, 0.0]  # Initialize to hold transformed coordinates
+        world_to_view_transform.MultiplyPoint(world_coords, view_coords)
+        logger.info(f"view coordinates: {view_coords}")
+
+        # Perspective division to get normalized device coordinates (NDC)
+        ndc_coords = [view_coords[i] / view_coords[3] for i in range(3)]
+        logger.info(f"NDC coordinates: {ndc_coords}")
+
+        # Ensure NDC coordinates are within [-1, 1] range
+        clamped_ndc_coords = np.clip(ndc_coords[:2], -1, 1)
+        logger.info(f"Clamped NDC coordinates: {clamped_ndc_coords}")
+
+        # Convert NDC to viewport coordinates (pixel coordinates)
+        window_size = plotter.window_size
+        logger.info(f"Window size: {window_size}")
+
+        viewport_coords = [
+            (clamped_ndc_coords[0] + 1) * 0.5 * window_size[0],  # X viewport
+            (clamped_ndc_coords[1] + 1) * 0.5 * window_size[1]  # Y viewport
+        ]
+
+        logger.info(f"Viewport coordinates: {viewport_coords}")
+
+        plotter.add_text(
+            label,
+            position=viewport_coords,
+            font_size=6,
+            color='w')
+
+    logger.info("xscale: %g", xscale)
+    logger.info("x_offset_factor: %g", x_offset_factor)
+    logger.info("y_offset: %g", y_offset)
+    logger.info("z_offset: %g", z_offset)
+
+    # Adjust camera focal point to the lower edge center
+    plotter.camera.focal_point = focal_point
     plotter.camera.position = camera_position
 
-    plotter.show_axes()
-    plotter.show()
+    scaled_bounds = (
+        bounds[0] * xscale,
+        bounds[1] * xscale,
+        bounds[2],
+        bounds[3],
+        0,
+        0)
+
+    logger.info("Scaled bounds: %s", scaled_bounds)
+
+    pointa = [bounds[0] * xscale, bounds[2] - 0.3, 0]
+    pointb = [bounds[1] * xscale, bounds[2] - 0.3, 0]
+    logger.info("x ruler from %s to %s", pointa, pointb)
+    xruler = plotter.add_ruler(pointa, pointb,
+                               title='x ($\lambda_\mathrm{D}$)', label_format='%.0f',
+                               font_size_factor=0.8,
+                               label_size_factor=0.7)
+
+    title_text_property = xruler.GetTitleTextProperty()
+    title_text_property.BoldOff()
+    title_text_property.ItalicOff()
+
+    label_text_property = xruler.GetLabelTextProperty()
+    label_text_property.BoldOff()
+    label_text_property.ItalicOff()
+
+    xruler.SetRange(bounds[0], bounds[1])
+
+    pointa = [bounds[0] * xscale - 0.3, 0, 0]
+    pointb = [bounds[0] * xscale - 0.3, 5, 0]
+    logger.info("y ruler from %s to %s", pointa, pointb)
+    yruler = plotter.add_ruler(pointb, pointa,
+                               title='y $(\lambda_\mathrm{D})$', label_format='%.0f',
+                               flip_range=True,
+                               font_size_factor=0.8,
+                               label_size_factor=0.7)
+    title_text_property = yruler.GetTitleTextProperty()
+    title_text_property.BoldOff()
+    title_text_property.ItalicOff()
+
+    label_text_property = yruler.GetLabelTextProperty()
+    label_text_property.BoldOff()
+    label_text_property.ItalicOff()
+
     logger.info("Dump concentration %i plot to %s.", i, output[i])
     plotter.screenshot(output[i])
