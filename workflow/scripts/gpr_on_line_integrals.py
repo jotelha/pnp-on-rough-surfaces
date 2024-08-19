@@ -17,6 +17,12 @@ predicted_Y_txt = output.predicted_Y_txt
 predicted_variance_txt = output.predicted_variance_txt
 model_txt = output.model_txt
 
+length_scale = float(wildcards.length_scale)
+signal_variance = float(wildcards.signal_variance)
+
+long_length_scale = float(wildcards.long_length_scale)
+long_signal_variance = float(wildcards.long_signal_variance)
+
 number_of_species = config["number_of_species"]
 
 y_value_label = f"excess_concentration_integral_{wildcards.species}"
@@ -76,13 +82,21 @@ y_values_T = y_values.values.reshape(-1, 1)
 x_values_T = x_values.values.reshape(-1, 1)
 
 # set kernel parameters
-length_scale_l = [1., 0.1]
-signal_variance_l = [10*np.var(y_values), np.var(y_values)]
+# length_scale_l = [1., 0.1]
+# signal_variance_l = [10*np.var(y_values), np.var(y_values)]
+# long_length_scale = 10*length_scale
+# long_signal_variance = 10*signal_variance
 interval = [np.min(df["x"]), np.max(df["x"])]
 # noise_variance = np.var(y_values) * 0.01
 
-logger.info(f"Length scales {length_scale_l}.")
-logger.info(f"Signal variances {signal_variance_l}.")
+logger.info(f"Length scale {length_scale}.")
+logger.info(f"Signal variance {signal_variance}.")
+
+logger.info(f"Long length scale {long_length_scale}.")
+logger.info(f"Long signal variance {long_signal_variance}.")
+
+# logger.info(f"Length scales {length_scale_l}.")
+#logger.info(f"Signal variances {signal_variance_l}.")
 
 # shuffle input values
 data = np.hstack([x_values_T, y_values_T])
@@ -101,8 +115,10 @@ N = len(Y)
 M = 50  # Number of inducing locations
 Z = X[:M, :].copy()  # Initialize inducing locations to the first M inputs in the dataset
 
-kernel = gpflow.kernels.SquaredExponential(variance=signal_variance_l[0], lengthscales=length_scale_l[0]) \
-       + gpflow.kernels.SquaredExponential(variance=signal_variance_l[1], lengthscales=length_scale_l[1])
+kernel = gpflow.kernels.SquaredExponential(variance=signal_variance, lengthscales=length_scale) \
+       + gpflow.kernels.SquaredExponential(variance=long_signal_variance, lengthscales=long_length_scale)
+
+# kernel = gpflow.kernels.SquaredExponential(variance=signal_variance, lengthscales=length_scale)
 
 m = gpflow.models.SVGP(kernel, gpflow.likelihoods.Gaussian(), Z, num_data=N)
 
@@ -111,7 +127,7 @@ elbo = tf.function(m.elbo)
 tensor_data = tuple(map(tf.convert_to_tensor, data))
 elbo(tensor_data)  # run it once to trace & compile
 
-minibatch_size = 50
+minibatch_size = 100
 train_dataset = tf.data.Dataset.from_tensor_slices((X, Y)).repeat().shuffle(N).batch(minibatch_size)
 
 # ELBO computation with minibatches

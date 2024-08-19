@@ -38,7 +38,7 @@ THICK_LINEWIDTH = 1.5
 SIMPLE_MEAN_LINEWIDTH = 0.25
 GRID_LINEWIDTH = 0.5
 
-DATA_POINTS_ALPHA = 0.5
+DATA_POINTS_ALPHA = 0.2
 CONFIDENCE_INTERVAL_ALPHA = 0.05
 WIDE_CONFIDENCE_INTERVAL_ALPHA = 0.05
 NARROW_CONFIDENCE_INTERVAL_ALPHA = 0.5
@@ -46,7 +46,7 @@ SIMPLE_MEAN_ALPHA = 0.5
 NARROWLY_SCATTERED_DATA_POINTS_ALPHA = 0.01
 WIDELY_SCATTERED_DATA_POINTS_ALPHA = 0.05
 
-DATA_POINTS_MARKER_SIZE = 2
+DATA_POINTS_MARKER_SIZE = 4
 WIDELY_SCATTERED_DATA_POINTS_MARKER_SIZE = 2
 NARROWLY_SCATTERED_DATA_POINTS_MARKER_SIZE = 1
 
@@ -133,20 +133,20 @@ ax1.set_ylabel('h ($\lambda_D)$', color=color)
 p1, = ax1.plot(df["x"], df["y"], color=color, linestyle=":", linewidth=1, label="roughness profile")
 
 # confidence interval
-for i in range(number_of_species):
-    color = color_l[i]
-
-    X = data[i]['X']
-    Y = data[i]['Y']
-    stddev = data[i]['stddev']
-
-    twins[i].fill_between(
-        X,
-        (Y-ci_factor*stddev),
-        (Y+ci_factor*stddev),
-        alpha=CONFIDENCE_INTERVAL_ALPHA,
-        label=f'{i}: GPR on surface excess $2\sigma$ confidence interval ',
-        color=color)
+# for i in range(number_of_species):
+#     color = color_l[i]
+#
+#     X = data[i]['X']
+#     Y = data[i]['Y']
+#     stddev = data[i]['stddev']
+#
+#     twins[i].fill_between(
+#         X,
+#         (Y-ci_factor*stddev),
+#         (Y+ci_factor*stddev),
+#         alpha=CONFIDENCE_INTERVAL_ALPHA,
+#         label=f'{i}: GPR on surface excess $2\sigma$ confidence interval ',
+#         color=color)
 
 # original data
 for i in range(number_of_species):
@@ -165,7 +165,8 @@ for i in range(number_of_species):
     rolling_mean_X = data[i]['rolling_mean_X']
     rolling_mean_Y = data[i]['rolling_mean_Y']
     p, = twins[i].plot(rolling_mean_X, rolling_mean_Y,
-            label=f'{i}: original data rolling mean', color=color)
+            label=f'{i}: original data rolling mean', color=color,
+            linestyle=(0, (1, 2)))
             #marker='x', markersize=DATA_POINTS_MARKER_SIZE,
             #color=color, alpha=DATA_POINTS_ALPHA) #, linestyle='none')
     p_list.append(p)
@@ -185,7 +186,7 @@ for i in range(number_of_species):
     Y = data[i]['Y']
     p, = twins[i].plot(X, Y,
                   label=f'{i}: GPR model for surface excess',
-                  color=color, alpha=1, linewidth=THICK_LINEWIDTH, linestyle=(0, (1, 2)))
+                  color=color, alpha=1, linewidth=THICK_LINEWIDTH)
     p_list.append(p)
 
 ax1.tick_params(axis='y', labelcolor=color)
@@ -211,7 +212,7 @@ ax1.tick_params(axis='x', **tkw)
 for i in range(number_of_species):
     twins[i].set_ylim(y_lims[i])
 
-ax1.legend(handles=[p1, *p_list])
+# ax1.legend(handles=[p1, *p_list])
 
 # ax.grid(which='major', axis='y', linewidth=GRID_LINEWIDTH)
 

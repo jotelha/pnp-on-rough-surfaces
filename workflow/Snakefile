@@ -14,6 +14,12 @@ reference_profile_label = config["reference_profile_label"]
 
 number_of_species = len(config["number_charges"])
 
+length_scale_values = config["length_scale_values"]
+signal_variance_values = config["signal_variance_values"]
+
+long_length_scale_values = config["long_length_scale_values"]
+long_signal_variance_values = config["long_signal_variance_values"]
+
 rule homogenize:
     output:
         profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
@@ -137,31 +143,31 @@ rule gpr_on_line_integrals:
     input:
         csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
     output:
-        ELBO_histogram_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/ELBO_histogram.png",
-        minibatch_speedup_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/minibatch_speedup.png",
-        predictions_before_training_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predictions_before_training.png",
-        convergence_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/convergence.png",
-        predictions_after_training_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predictions_after_training.png",
-        X_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/X.txt",
-        predicted_Y_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predicted_Y.txt",
-        predicted_variance_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/predicted_variance.txt",
-        model_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/model.txt",
+        ELBO_histogram_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/ELBO_histogram.png",
+        minibatch_speedup_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/minibatch_speedup.png",
+        predictions_before_training_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predictions_before_training.png",
+        convergence_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/convergence.png",
+        predictions_after_training_png=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predictions_after_training.png",
+        X_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt",
+        predicted_Y_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt",
+        predicted_variance_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt",
+        model_txt=f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/model.txt",
     log:
-        f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/gpr_on_line_integrals.log"
+        f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/gpr_on_line_integrals.log"
     script:
         "scripts/gpr_on_line_integrals.py"
 
 rule plot_gpr_on_line_integrals:
     input:
         csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
-        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/X.txt" for i in range(number_of_species)],
-        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/predicted_Y.txt" for i in range(number_of_species)],
-        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/predicted_variance.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
     output:
-        svg_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr.svg",
-        png_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr.png"
+        svg_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+        png_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
     log:
-        f"{out_prefix}/line_integrals/{{profile}}_plot_gpr_on_line_integrals.log"
+        f"{out_prefix}/line_integrals/{{profile}}_plot_gpr_on_line_integrals_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
         "scripts/plot_gpr_on_line_integrals.py"
 
@@ -309,12 +315,18 @@ rule plot_solution_2d:
 rule single_result:
     input:
         # f"{out_prefix}/line_integrals/{profile_labels[0]}_excess_concentration_integral_0_gpr/model.txt",
-        f"{out_prefix}/line_integrals/{profile_labels[0]}_integrals_with_gpr.png",
+        f"{out_prefix}/line_integrals/{profile_labels[0]}_integrals_with_gpr_length_scale_1_signal_variance_1e-4_length_scale_100_long_signal_variance_1.png",
         f"{out_prefix}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
 rule default:
     input:
         expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels),
+        expand(f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+            profile=profile_labels,
+            signal_variance=signal_variance_values,
+            length_scale=length_scale_values,
+            long_signal_variance=long_signal_variance_values,
+            long_length_scale=long_length_scale_values),
         expand(f"{out_prefix}/line_integrals/{{profile}}_integrals.csv", profile=profile_labels),
         expand(f"{out_prefix}/line_integrals/{{profile}}_integrals.png", profile=profile_labels),
         f"{out_prefix}/surface_integrals/surface_integrals.png",
