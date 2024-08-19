@@ -302,6 +302,7 @@ rule generate_comparative_plots:
         "scripts/generate_comparative_plots.py"
 
 rule plot_solution_2d:
+    priority: 50
     input:
         interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
     output:
