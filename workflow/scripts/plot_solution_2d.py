@@ -166,7 +166,7 @@ annotations = {
 
 plotter.add_mesh(grid, show_edges=False,
                  scalar_bar_args={
-                     'title': '                     potential $(U_T)$',
+                     'title': '                       potential $\phi\, (U_T)$',
                      'title_font_size': 16,
                      'label_font_size': 14,
                      'n_labels': 0,
