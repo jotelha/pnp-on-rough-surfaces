@@ -13,7 +13,6 @@ checkpoint_bp = input.solution_checkpoint_bp
 
 integrals_csv = output.integrals_csv
 
-import os.path
 import logging
 
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
@@ -24,11 +23,23 @@ import dolfinx
 import numpy as np
 import adios4dolfinx
 
-import scipy.constants as sc
-
 from mpi4py import MPI
 
 import gmsh
+
+def log_space_interval(start, stop, num, a=1, b=2):
+    """Generate log-spaced data points between start and stop, where the
+    interval grows from a to b"""
+    # Generate geometrically spaced points between 1 and the ratio a/b
+    points = np.geomspace(a, b, num=num)
+
+    # Scale points to the desired range
+    scale_factor = (stop - start) / (points[-1] - points[0])
+    # scale_factor =
+    log_space_points = start + scale_factor * (points - points[0])
+
+    return log_space_points
+
 
 # get boundary
 
@@ -90,7 +101,7 @@ bb_tree = dolfinx.geometry.bb_tree(mesh, mesh.topology.dim)
 # os.makedirs(concentration_profile_directory, exist_ok=True)
 
 for j, (x, y_min) in enumerate(zip(coords_3d[:,0], coords_3d[:,1])):
-    y_grid = np.linspace(y_min + tol, y_max - tol, N_points)
+    y_grid = log_space_interval(y_min + tol, y_max - tol, N_points)
 
     points = np.zeros((3, N_points))
     points[0, :] = x

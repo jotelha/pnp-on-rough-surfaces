@@ -6,6 +6,7 @@ config = snakemake.config
 logfile = snakemake.log[0]
 
 csv_file = input.csv_file
+reference_csv_file = input.reference_csv_file
 png_file = output.png_file
 svg_file = output.svg_file
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 len_input = len(input)
 logger.info("%d input files", len_input)
-assert len_input == 3*number_of_species + 1
+assert len_input == 3*number_of_species + 2
 X_txt_list = input[0:number_of_species]
 predicted_Y_txt_list = input[number_of_species:2*number_of_species]
 predicted_variance_txt_list = input[2*number_of_species:3*number_of_species]
@@ -55,22 +56,30 @@ NARROWLY_SCATTERED_DATA_POINTS_MARKER='o'
 
 ci_factor = 2. # confidence interval, 2 ~ 95 %
 
+x_lim = [170, 350]
+h_lim = [-0.2, 0.2]
+
 y_lims = [
-    [-1.246, -1.243],
+    [-1.2465, -1.2435],
     [3.291, 3.299]
+]
+
+yticks = [
+    [-1.246, -1.245, -1.244],
+    [3.292, 3.294, 3.296, 3.298]
 ]
 
 species_labels = ["$\mathrm{H}_3\mathrm{O}^+$", "$\mathrm{OH}^-$"]
 
 y_axis_labels = [
-    "$\Gamma_{\mathrm{H}_3\mathrm{O}^+} (c^\infty\, \lambda_D)$",
-    "$\Gamma_{\mathrm{OH}^-} (c^\infty\, \lambda_D)$"
+    "$\Gamma_{\mathrm{H}_3\mathrm{O}^+} (c_\mathrm{bulk}\, \lambda_D)$",
+    "$\Gamma_{\mathrm{OH}^-} (c_\mathrm{bulk}\, \lambda_D)$"
 ]
 
 color_l = ['tab:orange', 'tab:blue']
 
-df = pd.read_csv(input.csv_file)
-
+df = pd.read_csv(csv_file)
+reference_df = pd.read_csv(reference_csv_file)
 
 line_integral_rolling_mean_window = config["line_integral_rolling_mean_window"]
 line_integral_rolling_mean_window_std = config["line_integral_rolling_mean_window_std"]
@@ -83,8 +92,11 @@ data = {}
 for i in range(number_of_species):
     y_value_label = f"excess_concentration_integral_{i}"
 
-    reference_X = df["x"].values
-    reference_Y = df[y_value_label].values
+    reference_X = reference_df["x"].values
+    reference_Y = reference_df[y_value_label].values
+
+    original_X = df["x"].values
+    original_Y = df[y_value_label].values
 
     rolling_mean_X = df_smoothed["x"].values
     rolling_mean_Y = df_smoothed[y_value_label].values
@@ -97,6 +109,9 @@ for i in range(number_of_species):
     data[i] = {
         'reference_X': reference_X,
         'reference_Y': reference_Y,
+        'original_X': original_X,
+        'original_Y': original_Y,
+
         'rolling_mean_X': rolling_mean_X,
         'rolling_mean_Y': rolling_mean_Y,
         'X': X,
@@ -130,7 +145,9 @@ ax1.set_ylabel('h ($\lambda_D)$', color=color)
 # ax1.xaxis.set_minor_locator(MultipleLocator(1))
 
 # plot roughness profile
-p1, = ax1.plot(df["x"], df["y"], color=color, linestyle=":", linewidth=1, label="roughness profile")
+p1, = ax1.plot(
+    df["x"], df["y"],
+    color=color, linestyle="-", linewidth=1, label="roughness profile")
 
 # confidence interval
 # for i in range(number_of_species):
@@ -148,16 +165,42 @@ p1, = ax1.plot(df["x"], df["y"], color=color, linestyle=":", linewidth=1, label=
 #         label=f'{i}: GPR on surface excess $2\sigma$ confidence interval ',
 #         color=color)
 
-# original data
+# reference data
 for i in range(number_of_species):
     color = color_l[i]
-    reference_X = data[i]['reference_X']
-    reference_Y = data[i]['reference_Y']
-    p, = twins[i].plot(reference_X, reference_Y,
-            label=f'{i}: original data',
-            marker='x', markersize=DATA_POINTS_MARKER_SIZE,
-            color=color, linestyle='none', alpha=DATA_POINTS_ALPHA)
+    X = data[i]['reference_X']
+    Y = data[i]['reference_Y']
+    p, = twins[i].plot(X, Y,
+            label=f'{i}: surface excess on flat surface', color=color,
+            linestyle=(0, (1, 2)))
     p_list.append(p)
+
+# mean
+for i in range(number_of_species):
+    color = color_l[i]
+    X = data[i]['original_X']
+    Y = data[i]['original_Y']
+    mean_Y = np.mean(Y) * np.ones(Y.shape)
+    p, = twins[i].plot(X, mean_Y,
+            label=f'{i}: original data mean', color=color,
+            linestyle='--')
+    p_list.append(p)
+
+
+# original data
+# for i in range(number_of_species):
+#     color = color_l[i]
+#     X = data[i]['original_X']
+#     Y = data[i]['original_Y']
+#     p, = twins[i].plot(X, Y,
+#                        label=f'{i}: original data',
+#                        color=color,
+#                        alpha=DATA_POINTS_ALPHA, linewidth=0.5)
+#     # p, = twins[i].plot(X[::2], Y[::2],
+#     #         label=f'{i}: original data',
+#     #         marker='x', markersize=DATA_POINTS_MARKER_SIZE,
+#     #         color=color, linestyle='none', alpha=DATA_POINTS_ALPHA)
+#     p_list.append(p)
 
 # rolling average
 for i in range(number_of_species):
@@ -167,17 +210,7 @@ for i in range(number_of_species):
     p, = twins[i].plot(rolling_mean_X, rolling_mean_Y,
             label=f'{i}: original data rolling mean', color=color,
             linestyle=(0, (1, 2)))
-            #marker='x', markersize=DATA_POINTS_MARKER_SIZE,
-            #color=color, alpha=DATA_POINTS_ALPHA) #, linestyle='none')
     p_list.append(p)
-
-# # now simple mean of original data
-# for prefix, color in zip(prefix_l, color_l):
-#     mean_distance_d = data[prefix][secondary_prefix]['mean_distance_d']
-#     mean_force_d = data[prefix][secondary_prefix]['mean_force_d']
-#     ax.plot(mean_distance_d, mean_force_d,
-#             label=f'{prefix}, simple mean', alpha=SIMPLE_MEAN_ALPHA,
-#             color=color, linewidth=SIMPLE_MEAN_LINEWIDTH)
 
 # now GPR models
 for i in range(number_of_species):
@@ -209,14 +242,19 @@ for i in range(number_of_species):
 
 ax1.tick_params(axis='x', **tkw)
 
+ax1.set_xlim(x_lim)
+ax1.set_ylim(h_lim)
+
 for i in range(number_of_species):
     twins[i].set_ylim(y_lims[i])
+    twins[i].set_yticks(yticks[i])
 
 # ax1.legend(handles=[p1, *p_list])
 
 # ax.grid(which='major', axis='y', linewidth=GRID_LINEWIDTH)
 
-fig.set_size_inches(10, 6)
+fig.set_size_inches(7, 2.5)
+#  7.0, 5.25
 fig.tight_layout()
 fig.savefig(svg_file)
 fig.savefig(png_file)

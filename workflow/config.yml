@@ -20,12 +20,16 @@ line_integral_rolling_mean_window: 500
 line_integral_rolling_mean_window_std: 100
 
 # GPR parameters:
-length_scale_values: [10, 1]
-signal_variance_values: [1.e-3, 1.e-2, 0.1, 1]
+# length_scale_values: [10, 1]
+# signal_variance_values: [1.e-3, 1.e-2, 0.1, 1]
+length_scale_values: [10]
+signal_variance_values: [0.01]
+# long_length_scale_values: [50, 100]
+# long_signal_variance_values: [1.e-3, 1.e-2, 0.1, 1]
+long_length_scale_values: [50]
+long_signal_variance_values: [0.01]
 
-long_length_scale_values: [50, 100]
-long_signal_variance_values: [1.e-3, 1.e-2, 0.1, 1]
-
+# best combination: 10, 0.01, 50, 0.01
 reference_profile_label: rectangle_flat_from_vertical
 
 profiles:

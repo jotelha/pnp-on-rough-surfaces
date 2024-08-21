@@ -292,6 +292,13 @@ plotter.screenshot(output.potential_png)
 
 # concentrations
 
+xscale = 0.05
+x_offset_factor = 1.2
+y_offset = 2
+z_offset = 15
+contour_label_x_offset = - 3.6
+contour_label_y_offset = 0.08
+
 for i, concentration_function in enumerate(concentration_functions):
     grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
     grid.point_data["concentration"] = concentration_function.x.array.real

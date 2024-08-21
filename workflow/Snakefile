@@ -160,14 +160,15 @@ rule gpr_on_line_integrals:
 rule plot_gpr_on_line_integrals:
     input:
         csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/line_integrals/{reference_profile_label}_integrals.csv",
         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
     output:
-        svg_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
-        png_file=f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
+        svg_file=f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+        png_file=f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
     log:
-        f"{out_prefix}/line_integrals/{{profile}}_plot_gpr_on_line_integrals_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+        f"{out_prefix}/line_integral_plots/{{profile}}_plot_gpr_on_line_integrals_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
         "scripts/plot_gpr_on_line_integrals.py"
 
@@ -322,7 +323,7 @@ rule single_result:
 rule default:
     input:
         expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels),
-        expand(f"{out_prefix}/line_integrals/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+        expand(f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
             profile=profile_labels,
             signal_variance=signal_variance_values,
             length_scale=length_scale_values,
