@@ -157,7 +157,21 @@ rule gpr_on_line_integrals:
     script:
         "scripts/gpr_on_line_integrals.py"
 
-rule plot_gpr_on_line_integrals:
+# rule plot_gpr_on_line_integrals:
+#     input:
+#         csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+#         reference_csv_file= f"{out_prefix}/line_integrals/{reference_profile_label}_integrals.csv",
+#         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
+#         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
+#         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
+#     output:
+#         svg_file=f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+#         png_file=f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
+#     log:
+#         f"{out_prefix}/line_integral_plots/{{profile}}_plot_gpr_on_line_integrals_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+#     script:
+#         "scripts/plot_gpr_on_line_integrals.py"
+rule plot_surface_excess_local_with_gpr:
     input:
         csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
         reference_csv_file= f"{out_prefix}/line_integrals/{reference_profile_label}_integrals.csv",
@@ -165,12 +179,51 @@ rule plot_gpr_on_line_integrals:
         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
         *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
     output:
-        svg_file=f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
-        png_file=f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
+        svg_file=f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+        png_file=f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
     log:
-        f"{out_prefix}/line_integral_plots/{{profile}}_plot_gpr_on_line_integrals_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+        f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_plot_surface_excess_local_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
-        "scripts/plot_gpr_on_line_integrals.py"
+        "scripts/plot_surface_excess_local_with_gpr.py"
+
+rule plot_surface_excess_local:
+    input:
+        csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/line_integrals/{reference_profile_label}_integrals.csv",
+    output:
+        svg_file=f"{out_prefix}/surface_excess_local_plots/{{profile}}_surface_excess.svg",
+        png_file=f"{out_prefix}/surface_excess_local_plots/{{profile}}_surface_excess.png"
+    log:
+        f"{out_prefix}/surface_excess_local_plots/{{profile}}_plot_surface_excess_local.log"
+    script:
+        "scripts/plot_surface_excess_local.py"
+
+rule plot_surface_excess_global_with_gpr:
+    input:
+        csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/line_integrals/{reference_profile_label}_integrals.csv",
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/line_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
+    output:
+        svg_file=f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+        png_file=f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
+    log:
+        f"{out_prefix}/surface_excess_global_with_gpr_plots_plots/{{profile}}_plot_surface_excess_global_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+    script:
+        "scripts/plot_surface_excess_global_with_gpr.py"
+
+rule plot_surface_excess_global:
+    input:
+        csv_file = f"{out_prefix}/line_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/line_integrals/{reference_profile_label}_integrals.csv",
+    output:
+        svg_file=f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.svg",
+        png_file=f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.png"
+    log:
+        f"{out_prefix}/surface_excess_global_plots/{{profile}}_plot_surface_excess_global.log"
+    script:
+        "scripts/plot_surface_excess_global.py"
 
 rule plot_line_integrals:
     input:
@@ -323,12 +376,20 @@ rule single_result:
 rule default:
     input:
         expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels),
-        expand(f"{out_prefix}/line_integral_plots/{{profile}}_integrals_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+        expand(f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
             profile=profile_labels,
             signal_variance=signal_variance_values,
             length_scale=length_scale_values,
             long_signal_variance=long_signal_variance_values,
             long_length_scale=long_length_scale_values),
+        expand(f"{out_prefix}/surface_excess_local_plots/{{profile}}_surface_excess.png", profile=profile_labels),
+        expand(f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+            profile=profile_labels,
+            signal_variance=signal_variance_values,
+            length_scale=length_scale_values,
+            long_signal_variance=long_signal_variance_values,
+            long_length_scale=long_length_scale_values),
+        expand(f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.png", profile=profile_labels),
         expand(f"{out_prefix}/line_integrals/{{profile}}_integrals.csv", profile=profile_labels),
         expand(f"{out_prefix}/line_integrals/{{profile}}_integrals.png", profile=profile_labels),
         f"{out_prefix}/surface_integrals/surface_integrals.png",
