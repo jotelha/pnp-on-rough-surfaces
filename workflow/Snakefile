@@ -367,6 +367,41 @@ rule plot_solution_2d:
     script:
         "scripts/plot_solution_2d.py"
 
+rule plot_solution_2d_global:
+    priority: 50
+    input:
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+    output:
+        *[f"{out_prefix}/plot_solution_2d_global/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
+        potential_png=f"{out_prefix}/plot_solution_2d_global/{{profile}}_potential.png",
+    log:
+        f"{out_prefix}/plot_solution_2d_global/{{profile}}.log"
+    script:
+        "scripts/plot_solution_2d_global.py"
+
+rule plot_solution_2d_local:
+    priority: 50
+    input:
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+    output:
+        *[f"{out_prefix}/plot_solution_2d_local/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
+        potential_png=f"{out_prefix}/plot_solution_2d_local/{{profile}}_potential.png",
+    log:
+        f"{out_prefix}/plot_solution_2d_local/{{profile}}.log"
+    script:
+        "scripts/plot_solution_2d_local.py"
+
+rule plot_solution_1d:
+    priority: 50
+    output:
+        png_file = f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.png",
+        svg_file = f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.svg"
+    log:
+        f"{out_prefix}/logs/plot_solution_1d/electrochemical_double_layer.log"
+    script:
+        "scripts/plot_solution_1d.py"
+
+
 rule single_result:
     input:
         # f"{out_prefix}/line_integrals/{profile_labels[0]}_excess_concentration_integral_0_gpr/model.txt",
@@ -376,6 +411,8 @@ rule single_result:
 rule default:
     input:
         expand(f"{out_prefix}/plot_solution_2d/{{profile}}_potential.png",  profile=profile_labels),
+        expand(f"{out_prefix}/plot_solution_2d_global/{{profile}}_potential.png", profile=profile_labels),
+        expand(f"{out_prefix}/plot_solution_2d_local/{{profile}}_potential.png", profile=profile_labels),
         expand(f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
             profile=profile_labels,
             signal_variance=signal_variance_values,
@@ -392,6 +429,7 @@ rule default:
         expand(f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.png", profile=profile_labels),
         expand(f"{out_prefix}/line_integrals/{{profile}}_integrals.csv", profile=profile_labels),
         expand(f"{out_prefix}/line_integrals/{{profile}}_integrals.png", profile=profile_labels),
+        f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.png",
         f"{out_prefix}/surface_integrals/surface_integrals.png",
         f"{out_prefix}/profile_properties/profile_properties.csv",
         f"{out_prefix}/derived_properties/derived_properties.csv",
