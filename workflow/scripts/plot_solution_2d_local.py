@@ -15,11 +15,21 @@ checkpoint_bp = input.interpolated_solution_checkpoint_bp
 scale_factor = 2
 
 xscale = 0.05
-x_offset_factor = 1.4
+# x_offset_factor = 1.1
+x_focal_point = 275
 y_offset = 2
-z_offset = 15
+z_offset = 10
 contour_label_x_offset = - 3.6
 contour_label_y_offset = 0.12
+
+upper_y_clip_offset = 2
+lower_y_clip_offset = -1
+
+x_clip_width = 50
+
+contour_width = 6
+
+x_tick_spacing = 25
 
 import logging
 
@@ -95,7 +105,8 @@ logger.info("grid bounds: %s", bounds)
 
 # Calculate the lower edge center in the XY plane (Z = 0)
 focal_point = [
-    (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+    #(bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+    x_focal_point,
     bounds[2] + y_offset,                    # Y at the lower bound
     (bounds[4] + bounds[5]) / 2   # Z center (to stay in the middle Z plane)
 ]
@@ -103,11 +114,11 @@ focal_point = [
 logger.info("focal point: %s", focal_point)
 
 # clip in x direction
-upper_x_clip = focal_point[0] + 80
-lower_x_clip = focal_point[0] - 80
+upper_x_clip = focal_point[0] + x_clip_width/2
+lower_x_clip = focal_point[0] - x_clip_width/2
 
-upper_y_clip = focal_point[1] - y_offset + 5
-lower_y_clip = focal_point[1] - y_offset - 1
+upper_y_clip = focal_point[1] - y_offset + upper_y_clip_offset
+lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
 clipping_box = [lower_x_clip, upper_x_clip, lower_y_clip, upper_y_clip, -1, 1]
 
 logger.info("clipping box: %s", clipping_box)
@@ -195,7 +206,7 @@ title_text_property.SetJustificationToRight()
 title_text_property.SetLineOffset(10)
 
 logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
-plotter.add_mesh(contours, line_width=6, render_lines_as_tubes=True, color='w')
+plotter.add_mesh(contours, line_width=contour_width, render_lines_as_tubes=True, color='w')
 plotter.set_scale(xscale=xscale)
 plotter.view_xy()
 
@@ -241,7 +252,8 @@ for label, position in zip(contour_labels, contour_label_coordinates):
         color='w')
 
 logger.info("xscale: %g", xscale)
-logger.info("x_offset_factor: %g", x_offset_factor)
+# logger.info("x_offset_factor: %g", x_offset_factor)#
+logger.info("x_focal_point: %g", x_focal_point)
 logger.info("y_offset: %g", y_offset)
 logger.info("z_offset: %g", z_offset)
 
@@ -267,6 +279,25 @@ xruler = plotter.add_ruler(pointa, pointb,
                            label_format='%.0f',
                            font_size_factor=0.8,
                            label_size_factor=0.7)
+# keyword scale does not exist in this version
+
+xruler_range = xruler.GetRange()
+logger.info("xruler range: %s", xruler_range)
+x_range = np.array([bounds[0], bounds[1]])
+logger.info("x range: %s", x_range)
+xruler_scale_factor = (xruler_range[1] - xruler_range[0])/(x_range[1]-x_range[0])
+logger.info("xruler range / x range scale factor: %g", xruler_scale_factor)
+xruler.SetRange(bounds[0], bounds[1])
+new_xruler_range = xruler.GetRange()
+
+number_of_ticks = int(np.round(x_range[1]-x_range[0])/x_tick_spacing)+1
+logger.info("number of ticks: %s", number_of_ticks)
+logger.info("new  xruler range: %s", new_xruler_range)
+
+xruler.AdjustLabelsOff()
+# xruler.SetNumberOfMinorTicks(number_of_minor_ticks)
+xruler.SetNumberOfLabels(number_of_ticks)
+
 title_text_property = xruler.GetTitleTextProperty()
 title_text_property.BoldOff()
 title_text_property.ItalicOff()
@@ -275,10 +306,8 @@ label_text_property = xruler.GetLabelTextProperty()
 label_text_property.BoldOff()
 label_text_property.ItalicOff()
 
-xruler.SetRange(bounds[0], bounds[1])
-
 pointa = [bounds[0] * xscale - 0.3, 0, 0]
-pointb = [bounds[0] * xscale - 0.3, 5, 0]
+pointb = [bounds[0] * xscale - 0.3, upper_y_clip_offset, 0]
 logger.info("y ruler from %s to %s", pointa, pointb)
 yruler = plotter.add_ruler(pointb, pointa,
                            title=y_label, label_format='%.0f',
@@ -300,12 +329,14 @@ plotter.screenshot(output.potential_png)
 
 # concentrations
 
-xscale = 0.05
-x_offset_factor = 1.2
-y_offset = 2
-z_offset = 15
+# xscale = 0.02
+# x_offset_factor = 0.93
+# y_offset = 2
+# z_offset = 15
 contour_label_x_offset = - 3.6
-contour_label_y_offset = 0.08
+contour_label_y_offset = 0.0
+
+# x_clip_width = 400
 
 for i, concentration_function in enumerate(concentration_functions):
     grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
@@ -317,7 +348,8 @@ for i, concentration_function in enumerate(concentration_functions):
 
     # Calculate the lower edge center in the XY plane (Z = 0)
     focal_point = [
-        (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+        # (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+        x_focal_point,
         bounds[2] + y_offset,  # Y at the lower bound
         (bounds[4] + bounds[5]) / 2  # Z center (to stay in the middle Z plane)
     ]
@@ -325,11 +357,13 @@ for i, concentration_function in enumerate(concentration_functions):
     logger.info("focal point: %s", focal_point)
 
     # clip in x direction
-    upper_x_clip = focal_point[0] + 80
-    lower_x_clip = focal_point[0] - 80
+    upper_x_clip = focal_point[0] + x_clip_width / 2
+    lower_x_clip = focal_point[0] - x_clip_width / 2
 
-    upper_y_clip = focal_point[1] - y_offset + 5
-    lower_y_clip = focal_point[1] - y_offset - 1
+    # upper_y_clip = focal_point[1] - y_offset + upper_y_clip_offset
+    upper_y_clip = upper_y_clip_offset
+    # lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+    lower_y_clip = lower_y_clip_offset
     clipping_box = [lower_x_clip, upper_x_clip, lower_y_clip, upper_y_clip, -1, 1]
 
     logger.info("clipping box: %s", clipping_box)
@@ -352,7 +386,7 @@ for i, concentration_function in enumerate(concentration_functions):
 
     logger.info("Minimum concentration: %g", cmin)
     logger.info("Maximum concentration: %g", cmax)
-    contour_values = np.geomspace(cmin+ 0.02 * cspan, cmin + 0.9 * cspan, num=5)
+    contour_values = np.geomspace(cmin+ 0.02 * cspan, cmin + 0.9 * cspan, num=10)
     contours = grid.contour(isosurfaces=contour_values)
     levels = contours.split_bodies()
 
@@ -368,7 +402,9 @@ for i, concentration_function in enumerate(concentration_functions):
     ]
     logger.info("camera position: %s", focal_point)
 
-    for level, value in zip(levels, contour_values[::-1]):
+    if contour_values[0] > 1: # weird adjustment for ordering
+         contour_values = contour_values[::-1]
+    for level, value in zip(levels, contour_values):
         pt = np.mean(level.points, axis=0)
         pt[0] = (camera_position[0] + contour_label_x_offset) / xscale
         pt[1] += contour_label_y_offset
@@ -376,7 +412,7 @@ for i, concentration_function in enumerate(concentration_functions):
         logger.info("contour %.2f: coordinates %s", value, pt)
         pts.append(pt)
 
-    contour_labels = [f'{v:.2f}' for v in contour_values[::-1]]
+    contour_labels = [f'{v:.2f}' for v in contour_values]
     contour_label_coordinates = np.array(pts)
 
     logger.info("Contour labels: %s", contour_labels)
@@ -420,7 +456,7 @@ for i, concentration_function in enumerate(concentration_functions):
     title_text_property.SetLineOffset(10)
 
     logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
-    plotter.add_mesh(contours, line_width=3, render_lines_as_tubes=True, color='w')
+    plotter.add_mesh(contours, line_width=contour_width, render_lines_as_tubes=True, color='w')
     plotter.set_scale(xscale=xscale)
     plotter.view_xy()
 
@@ -428,7 +464,7 @@ for i, concentration_function in enumerate(concentration_functions):
         renderer = plotter.renderer
         camera = renderer.GetActiveCamera()
 
-        world_coords = [position[0] * xscale, position[1], position[2], 1.0]
+        world_coords = [(x_focal_point+x_clip_width/2)*xscale, position[1], position[2], 1.0]
         logger.info(f"World coordinates: {world_coords}")
 
         # Get the transformation matrix from world to view coordinates
@@ -452,8 +488,8 @@ for i, concentration_function in enumerate(concentration_functions):
         logger.info(f"Window size: {window_size}")
 
         viewport_coords = [
-            (clamped_ndc_coords[0] + 1) * 0.5 * window_size[0],  # X viewport
-            (clamped_ndc_coords[1] + 1) * 0.5 * window_size[1]  # Y viewport
+            (clamped_ndc_coords[0] + 1) * 0.5 * window_size[0] * scale_factor,  # X viewport
+            (clamped_ndc_coords[1] + 1) * 0.5 * window_size[1] * scale_factor # Y viewport
         ]
 
         logger.info(f"Viewport coordinates: {viewport_coords}")
@@ -462,10 +498,11 @@ for i, concentration_function in enumerate(concentration_functions):
             label,
             position=viewport_coords,
             font_size=6,
-            color='w')
+            color='k')
 
     logger.info("xscale: %g", xscale)
-    logger.info("x_offset_factor: %g", x_offset_factor)
+    # logger.info("x_offset_factor: %g", x_offset_factor)
+    logger.info("x_focal_point: %g", x_focal_point)
     logger.info("y_offset: %g", y_offset)
     logger.info("z_offset: %g", z_offset)
 
@@ -492,6 +529,15 @@ for i, concentration_function in enumerate(concentration_functions):
                                font_size_factor=0.8,
                                label_size_factor=0.7)
 
+    xruler_range = xruler.GetRange()
+    logger.info("xruler range: %s", xruler_range)
+    x_range = np.array([bounds[0], bounds[1]])
+    logger.info("x range: %s", x_range)
+    xruler_scale_factor = (xruler_range[1] - xruler_range[0])/(x_range[1]-x_range[0])
+    logger.info("xruler range / x range scale factor: %g", xruler_scale_factor)
+
+    xruler.SetRange(x_range[0], x_range[1])
+
     title_text_property = xruler.GetTitleTextProperty()
     title_text_property.BoldOff()
     title_text_property.ItalicOff()
@@ -500,10 +546,24 @@ for i, concentration_function in enumerate(concentration_functions):
     label_text_property.BoldOff()
     label_text_property.ItalicOff()
 
+    xruler_range = xruler.GetRange()
+    logger.info("xruler range: %s", xruler_range)
+    x_range = np.array([bounds[0], bounds[1]])
+    logger.info("x range: %s", x_range)
+    xruler_scale_factor = (xruler_range[1] - xruler_range[0]) / (x_range[1] - x_range[0])
+    logger.info("xruler range / x range scale factor: %g", xruler_scale_factor)
     xruler.SetRange(bounds[0], bounds[1])
+    new_xruler_range = xruler.GetRange()
+
+    number_of_ticks = int(np.round(x_range[1] - x_range[0]) / x_tick_spacing) + 1
+    logger.info("number of ticks: %s", number_of_ticks)
+    logger.info("new  xruler range: %s", new_xruler_range)
+
+    xruler.AdjustLabelsOff()
+    xruler.SetNumberOfLabels(number_of_ticks)
 
     pointa = [bounds[0] * xscale - 0.3, 0, 0]
-    pointb = [bounds[0] * xscale - 0.3, 5, 0]
+    pointb = [bounds[0] * xscale - 0.3, upper_y_clip_offset, 0]
     logger.info("y ruler from %s to %s", pointa, pointb)
     yruler = plotter.add_ruler(pointb, pointa,
                                title=y_label,
@@ -511,6 +571,10 @@ for i, concentration_function in enumerate(concentration_functions):
                                flip_range=True,
                                font_size_factor=0.8,
                                label_size_factor=0.7)
+
+    yruler.AdjustLabelsOff()
+    yruler.SetNumberOfLabels(int(upper_y_clip_offset)+1)
+
     title_text_property = yruler.GetTitleTextProperty()
     title_text_property.BoldOff()
     title_text_property.ItalicOff()
