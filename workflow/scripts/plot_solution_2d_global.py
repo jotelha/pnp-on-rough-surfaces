@@ -23,6 +23,8 @@ contour_label_y_offset = 0.12
 
 x_clip_width = 400
 
+contour_width = 6
+
 import logging
 
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.INFO)
@@ -197,7 +199,7 @@ title_text_property.SetJustificationToRight()
 title_text_property.SetLineOffset(10)
 
 logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
-plotter.add_mesh(contours, line_width=6, render_lines_as_tubes=True, color='w')
+plotter.add_mesh(contours, line_width=contour_width, render_lines_as_tubes=True, color='w')
 plotter.set_scale(xscale=xscale)
 plotter.view_xy()
 
@@ -280,7 +282,7 @@ logger.info("xruler range / x range scale factor: %g", xruler_scale_factor)
 xruler.SetRange(bounds[0], bounds[1])
 new_xruler_range = xruler.GetRange()
 
-number_of_ticks = int((x_range[1]-x_range[0])/50)+1
+number_of_ticks = int(np.round(x_range[1]-x_range[0])/50)+1
 logger.info("number of ticks: %s", number_of_ticks)
 logger.info("new  xruler range: %s", new_xruler_range)
 
@@ -443,7 +445,7 @@ for i, concentration_function in enumerate(concentration_functions):
     title_text_property.SetLineOffset(10)
 
     logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
-    plotter.add_mesh(contours, line_width=3, render_lines_as_tubes=True, color='w')
+    plotter.add_mesh(contours, line_width=contour_width, render_lines_as_tubes=True, color='w')
     plotter.set_scale(xscale=xscale)
     plotter.view_xy()
 

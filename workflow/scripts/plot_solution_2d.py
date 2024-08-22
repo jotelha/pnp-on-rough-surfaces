@@ -12,8 +12,10 @@ temperature = config["temperature"]
 potential_bias_SI = config["potential_bias"]
 checkpoint_bp = input.interpolated_solution_checkpoint_bp
 
+scale_factor = 2
+
 xscale = 0.05
-x_offset_factor = 1.2
+x_offset_factor = 1.4
 y_offset = 2
 z_offset = 15
 contour_label_x_offset = - 3.6
@@ -34,6 +36,9 @@ potential_bias = potential_bias_SI / thermal_voltage
 
 concentration_labels = ["$[\mathrm{H}_3\mathrm{O}^+] (c_{\mathrm{bulk}})$",
                         "$[\mathrm{OH}^-] (c_{\mathrm{bulk}})$"]
+
+x_label = 'Length $x$ ($\lambda_\mathrm{D}$)'
+y_label = 'Height $z$ ($\lambda_\mathrm{D}$)'
 
 import basix
 import dolfinx
@@ -157,6 +162,8 @@ theme.font.color = 'black'
 
 logger.info("Plot potential.")
 plotter = pyvista.Plotter(theme=theme)
+plotter.image_scale = scale_factor
+
 # plotter = pyvista.Plotter()
 annotations = {
     potential_bias: f"{potential_bias:.2f}",
@@ -166,7 +173,7 @@ annotations = {
 
 plotter.add_mesh(grid, show_edges=False,
                  scalar_bar_args={
-                     'title': '                       potential $\phi\, (U_T)$',
+                     'title': '                       Potential $\phi\, (U_T)$',
                      'title_font_size': 16,
                      'label_font_size': 14,
                      'n_labels': 0,
@@ -188,7 +195,7 @@ title_text_property.SetJustificationToRight()
 title_text_property.SetLineOffset(10)
 
 logger.info("Add %d labels at %d points", len(contour_labels), len(contour_label_coordinates))
-plotter.add_mesh(contours, line_width=3, render_lines_as_tubes=True, color='w')
+plotter.add_mesh(contours, line_width=6, render_lines_as_tubes=True, color='w')
 plotter.set_scale(xscale=xscale)
 plotter.view_xy()
 
@@ -221,8 +228,8 @@ for label, position in zip(contour_labels, contour_label_coordinates):
     logger.info(f"Window size: {window_size}")
 
     viewport_coords = [
-        (clamped_ndc_coords[0] + 1) * 0.5 * window_size[0],  # X viewport
-        (clamped_ndc_coords[1] + 1) * 0.5 * window_size[1]  # Y viewport
+        (clamped_ndc_coords[0] + 1) * 0.5 * window_size[0] * scale_factor,  # X viewport
+        (clamped_ndc_coords[1] + 1) * 0.5 * window_size[1] * scale_factor # Y viewport
     ]
 
     logger.info(f"Viewport coordinates: {viewport_coords}")
@@ -256,10 +263,10 @@ pointa = [bounds[0] * xscale, bounds[2] - 0.3, 0]
 pointb = [bounds[1] * xscale, bounds[2] - 0.3, 0]
 logger.info("x ruler from %s to %s", pointa, pointb)
 xruler = plotter.add_ruler(pointa, pointb,
-                           title='x ($\lambda_\mathrm{D}$)', label_format='%.0f',
+                           title=x_label,
+                           label_format='%.0f',
                            font_size_factor=0.8,
                            label_size_factor=0.7)
-
 title_text_property = xruler.GetTitleTextProperty()
 title_text_property.BoldOff()
 title_text_property.ItalicOff()
@@ -274,19 +281,20 @@ pointa = [bounds[0] * xscale - 0.3, 0, 0]
 pointb = [bounds[0] * xscale - 0.3, 5, 0]
 logger.info("y ruler from %s to %s", pointa, pointb)
 yruler = plotter.add_ruler(pointb, pointa,
-                          title='y $(\lambda_\mathrm{D})$', label_format='%.0f',
-                          flip_range=True,
-                          font_size_factor=0.8,
-                          label_size_factor=0.7)
+                           title=y_label, label_format='%.0f',
+                           flip_range=True,
+                           font_size_factor=0.8,
+                           label_size_factor=0.7)
 title_text_property = yruler.GetTitleTextProperty()
 title_text_property.BoldOff()
 title_text_property.ItalicOff()
+# title_text_property.SetOrientation(90)
 
 label_text_property = yruler.GetLabelTextProperty()
 label_text_property.BoldOff()
 label_text_property.ItalicOff()
 
-plotter.show()
+# plotter.show()
 logger.info("Dump potential plot to %s.", output.potential_png)
 plotter.screenshot(output.potential_png)
 
@@ -380,6 +388,7 @@ for i, concentration_function in enumerate(concentration_functions):
 
     logger.info("Plot potential.")
     plotter = pyvista.Plotter(theme=theme)
+    plotter.image_scale = 2
     # plotter = pyvista.Plotter()
     annotations = {
         cmin+0.01*cspan: f"{cmin:.2f}",
@@ -478,7 +487,8 @@ for i, concentration_function in enumerate(concentration_functions):
     pointb = [bounds[1] * xscale, bounds[2] - 0.3, 0]
     logger.info("x ruler from %s to %s", pointa, pointb)
     xruler = plotter.add_ruler(pointa, pointb,
-                               title='x ($\lambda_\mathrm{D}$)', label_format='%.0f',
+                               title=x_label,
+                               label_format='%.0f',
                                font_size_factor=0.8,
                                label_size_factor=0.7)
 
@@ -496,7 +506,8 @@ for i, concentration_function in enumerate(concentration_functions):
     pointb = [bounds[0] * xscale - 0.3, 5, 0]
     logger.info("y ruler from %s to %s", pointa, pointb)
     yruler = plotter.add_ruler(pointb, pointa,
-                               title='y $(\lambda_\mathrm{D})$', label_format='%.0f',
+                               title=y_label,
+                               label_format='%.0f',
                                flip_range=True,
                                font_size_factor=0.8,
                                label_size_factor=0.7)
