@@ -46,29 +46,17 @@ NARROWLY_SCATTERED_DATA_POINTS_MARKER='o'
 ci_factor = 2. # confidence interval, 2 ~ 95 %
 
 x_lim = [0, 420]
-#h_lim = [-0.2, 0.2]
 
 h_lim = config["profiles"][wildcards.profile]["surface_excess_global"]["hlim"]
 h_ticks = config["profiles"][wildcards.profile]["surface_excess_global"]["hticks"]
-
-# y_lims = [
-#     #[-1.2465, -1.2435],
-#     #[3.291, 3.299]
-#     [-1.26, -1.24],
-#     [3.28, 3.35]
-# ]
-#
-# yticks = [
-#     # [-1.246, -1.245, -1.244],
-#     # [3.292, 3.294, 3.296, 3.298]
-#     [-1.248, -1.246 , -1.244, -1.242],
-#     [3.285, 3.295, 3.305]
-# ]
 
 y_lims = config["profiles"][wildcards.profile]["surface_excess_global"]["ylims"]
 y_ticks = config["profiles"][wildcards.profile]["surface_excess_global"]["yticks"]
 
 species_labels = ["$\mathrm{H}_3\mathrm{O}^+$", "$\mathrm{OH}^-$"]
+
+x_axis_label = 'length x ($\lambda_D)$'
+h_axis_label = 'profile height h ($\lambda_D)$'
 
 y_axis_labels = [
     "$\Gamma_{\mathrm{H}_3\mathrm{O}^+} (c_\mathrm{bulk}\, \lambda_D)$",
@@ -104,8 +92,8 @@ twins = [ax1.twinx() for i in range(number_of_species)]
 p_list = []
 
 color = 'dimgray'
-ax1.set_xlabel('x ($\lambda_D)$')
-ax1.set_ylabel('h ($\lambda_D)$', color=color)
+ax1.set_xlabel(x_axis_label)
+ax1.set_ylabel(h_axis_label, color=color)
 
 # Make a plot with major ticks that are multiples of 20 and minor ticks that
 # are multiples of 5.  Label major ticks with '%d' formatting but don't label

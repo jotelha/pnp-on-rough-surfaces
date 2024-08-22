@@ -56,20 +56,18 @@ NARROWLY_SCATTERED_DATA_POINTS_MARKER='o'
 
 ci_factor = 2. # confidence interval, 2 ~ 95 %
 
-# x_lim = [170, 350]
-h_lim = [-0.2, 0.2]
+x_lim = [0, 420]
 
-y_lims = [
-    [-1.2465, -1.2435],
-    [3.291, 3.299]
-]
+h_lim = config["profiles"][wildcards.profile]["surface_excess_global_with_gpr"]["hlim"]
+h_ticks = config["profiles"][wildcards.profile]["surface_excess_global_with_gpr"]["hticks"]
 
-yticks = [
-    [-1.246, -1.245, -1.244],
-    [3.292, 3.294, 3.296, 3.298]
-]
+y_lims = config["profiles"][wildcards.profile]["surface_excess_global_with_gpr"]["ylims"]
+y_ticks = config["profiles"][wildcards.profile]["surface_excess_global_with_gpr"]["yticks"]
 
 species_labels = ["$\mathrm{H}_3\mathrm{O}^+$", "$\mathrm{OH}^-$"]
+
+x_axis_label = 'length x ($\lambda_D)$'
+h_axis_label = 'profile height h ($\lambda_D)$'
 
 y_axis_labels = [
     "$\Gamma_{\mathrm{H}_3\mathrm{O}^+} (c_\mathrm{bulk}\, \lambda_D)$",
@@ -80,12 +78,6 @@ color_l = ['tab:orange', 'tab:blue']
 
 df = pd.read_csv(csv_file)
 reference_df = pd.read_csv(reference_csv_file)
-
-line_integral_rolling_mean_window = config["line_integral_rolling_mean_window"]
-line_integral_rolling_mean_window_std = config["line_integral_rolling_mean_window_std"]
-
-df_smoothed = df.rolling(window=line_integral_rolling_mean_window,
-                         center=True, on="x", win_type="gaussian").mean(std=line_integral_rolling_mean_window_std)
 
 data = {}
 
@@ -98,9 +90,6 @@ for i in range(number_of_species):
     original_X = df["x"].values
     original_Y = df[y_value_label].values
 
-    rolling_mean_X = df_smoothed["x"].values
-    rolling_mean_Y = df_smoothed[y_value_label].values
-
     X = np.loadtxt(X_txt_list[i])
     Y = np.loadtxt(predicted_Y_txt_list[i])
     variance = np.loadtxt(predicted_variance_txt_list[i])
@@ -112,8 +101,6 @@ for i in range(number_of_species):
         'original_X': original_X,
         'original_Y': original_Y,
 
-        'rolling_mean_X': rolling_mean_X,
-        'rolling_mean_Y': rolling_mean_Y,
         'X': X,
         'Y': Y,
         'variance': variance,
@@ -126,8 +113,8 @@ twins = [ax1.twinx() for i in range(number_of_species)]
 p_list = []
 
 color = 'dimgray'
-ax1.set_xlabel('x ($\lambda_D)$')
-ax1.set_ylabel('h ($\lambda_D)$', color=color)
+ax1.set_xlabel(x_axis_label)
+ax1.set_ylabel(h_axis_label, color=color)
 
 # Make a plot with major ticks that are multiples of 20 and minor ticks that
 # are multiples of 5.  Label major ticks with '%d' formatting but don't label
@@ -186,31 +173,6 @@ for i in range(number_of_species):
             linestyle='--')
     p_list.append(p)
 
-# original data
-# for i in range(number_of_species):
-#     color = color_l[i]
-#     X = data[i]['original_X']
-#     Y = data[i]['original_Y']
-#     p, = twins[i].plot(X, Y,
-#                        label=f'{i}: original data',
-#                        color=color,
-#                        alpha=DATA_POINTS_ALPHA, linewidth=0.5)
-#     # p, = twins[i].plot(X[::2], Y[::2],
-#     #         label=f'{i}: original data',
-#     #         marker='x', markersize=DATA_POINTS_MARKER_SIZE,
-#     #         color=color, linestyle='none', alpha=DATA_POINTS_ALPHA)
-#     p_list.append(p)
-
-# rolling average
-for i in range(number_of_species):
-    color = color_l[i]
-    rolling_mean_X = data[i]['rolling_mean_X']
-    rolling_mean_Y = data[i]['rolling_mean_Y']
-    p, = twins[i].plot(rolling_mean_X, rolling_mean_Y,
-            label=f'{i}: original data rolling mean', color=color,
-            linestyle=(0, (1, 2)))
-    p_list.append(p)
-
 # now GPR models
 for i in range(number_of_species):
     color = color_l[i]
@@ -241,12 +203,13 @@ for i in range(number_of_species):
 
 ax1.tick_params(axis='x', **tkw)
 
-# ax1.set_xlim(x_lim)
+ax1.set_xlim(x_lim)
 ax1.set_ylim(h_lim)
+ax1.set_yticks(h_ticks)
 
 for i in range(number_of_species):
     twins[i].set_ylim(y_lims[i])
-    twins[i].set_yticks(yticks[i])
+    twins[i].set_yticks(y_ticks[i])
 
 # ax1.legend(handles=[p1, *p_list])
 
