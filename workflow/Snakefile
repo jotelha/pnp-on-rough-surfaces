@@ -71,7 +71,7 @@ rule mesh:
         geometry_geo=f"{out_prefix}/geometries/{{profile}}.geo_unrolled",
         mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
     log:
-        f"{out_prefix}/logs/meshes/{{profile}}.log"
+        f"{out_prefix}/meshes/{{profile}}.log"
     script:
         "scripts/mesh.py"
 
@@ -123,7 +123,7 @@ rule compute_surface_charge:
     output:
         json_file = f"{out_prefix}/surface_charge/{{profile}}.json"
     log:
-        f"{out_prefix}/logs/041_compute_surface_charge/{{profile}}.log"
+        f"{out_prefix}/surface_charge/{{profile}}.log"
     script:
         "scripts/compute_surface_charge.py"
 
@@ -135,7 +135,7 @@ rule compute_surface_integrals:
     output:
         integrals_csv=f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
     log:
-        f"{out_prefix}/logs/042_compute_surface_integrals/{{profile}}.log"
+        f"{out_prefix}/surface_integrals/{{profile}}.log"
     script:
         "scripts/compute_surface_integrals.py"
 
@@ -219,7 +219,7 @@ rule compute_derived_properties:
     output:
         json_file=f"{out_prefix}/derived_properties/{{profile}}.json"
     log:
-        f"{out_prefix}/logs/045_compute_derived_properties/{{profile}}.log"
+        f"{out_prefix}/derived_properties/{{profile}}.log"
     script:
         "scripts/compute_derived_properties.py"
 
@@ -230,7 +230,7 @@ rule compute_comparative_properties:
     output:
         json_file=f"{out_prefix}/comparative_properties/{{profile}}.json"
     log:
-        f"{out_prefix}/logs/048_compute_comparative_properties/{{profile}}.log"
+        f"{out_prefix}/comparative_properties/{{profile}}.log"
     script:
          "scripts/compute_comparative_properties.py"
 
@@ -362,14 +362,13 @@ rule plot_solution_1d:
         png_file = f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.png",
         svg_file = f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.svg"
     log:
-        f"{out_prefix}/logs/plot_solution_1d/electrochemical_double_layer.log"
+        f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.log"
     script:
         "scripts/plot_solution_1d.py"
 
 
 rule single_result:
     input:
-        # f"{out_prefix}/surface_integrals/{profile_labels[0]}_excess_concentration_integral_0_gpr/model.txt",
         f"{out_prefix}/surface_integrals/{profile_labels[0]}_integrals_with_gpr_length_scale_1_signal_variance_1e-4_length_scale_100_long_signal_variance_1.png",
         f"{out_prefix}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
