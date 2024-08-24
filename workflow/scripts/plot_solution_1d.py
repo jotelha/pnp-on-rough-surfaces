@@ -83,7 +83,7 @@ ax1.set_xticks(
 )
 
 ax1.set_yticks(
-    ticks=[0, potential_bias_SI],
+    ticks=[0, thermal_voltage],
     labels=[0, "$U_T$"]
 )
 

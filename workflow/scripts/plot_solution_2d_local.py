@@ -117,8 +117,11 @@ logger.info("focal point: %s", focal_point)
 upper_x_clip = focal_point[0] + x_clip_width/2
 lower_x_clip = focal_point[0] - x_clip_width/2
 
-upper_y_clip = focal_point[1] - y_offset + upper_y_clip_offset
-lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+# upper_y_clip = focal_point[1] - y_offset + upper_y_clip_offset
+# lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+upper_y_clip = upper_y_clip_offset
+# lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+lower_y_clip = lower_y_clip_offset
 clipping_box = [lower_x_clip, upper_x_clip, lower_y_clip, upper_y_clip, -1, 1]
 
 logger.info("clipping box: %s", clipping_box)

@@ -16,14 +16,20 @@ scale_factor = 2
 
 xscale = 0.02
 x_offset_factor = 0.93
+x_focal_point = 200
 y_offset = 2
 z_offset = 15
 contour_label_x_offset = - 3.6
 contour_label_y_offset = 0.12
 
+upper_y_clip_offset = 5
+lower_y_clip_offset = -1
+
 x_clip_width = 400
 
 contour_width = 6
+
+x_tick_spacing = 50
 
 import logging
 
@@ -99,7 +105,8 @@ logger.info("grid bounds: %s", bounds)
 
 # Calculate the lower edge center in the XY plane (Z = 0)
 focal_point = [
-    (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+    #(bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+    x_focal_point,
     bounds[2] + y_offset,                    # Y at the lower bound
     (bounds[4] + bounds[5]) / 2   # Z center (to stay in the middle Z plane)
 ]
@@ -110,8 +117,11 @@ logger.info("focal point: %s", focal_point)
 upper_x_clip = focal_point[0] + x_clip_width/2
 lower_x_clip = focal_point[0] - x_clip_width/2
 
-upper_y_clip = focal_point[1] - y_offset + 5
-lower_y_clip = focal_point[1] - y_offset - 1
+# upper_y_clip = focal_point[1] - y_offset + upper_y_clip_offset
+# lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+upper_y_clip = upper_y_clip_offset
+# lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+lower_y_clip = lower_y_clip_offset
 clipping_box = [lower_x_clip, upper_x_clip, lower_y_clip, upper_y_clip, -1, 1]
 
 logger.info("clipping box: %s", clipping_box)
@@ -208,7 +218,7 @@ for label, position in zip(contour_labels, contour_label_coordinates):
     renderer = plotter.renderer
     camera = renderer.GetActiveCamera()
 
-    world_coords = [position[0]*xscale, position[1], position[2], 1.0]
+    world_coords = [(x_focal_point + 0.8 * x_clip_width / 2) * xscale, position[1], position[2], 1.0]
     logger.info(f"World coordinates: {world_coords}")
 
     # Get the transformation matrix from world to view coordinates
@@ -245,7 +255,8 @@ for label, position in zip(contour_labels, contour_label_coordinates):
         color='w')
 
 logger.info("xscale: %g", xscale)
-logger.info("x_offset_factor: %g", x_offset_factor)
+# logger.info("x_offset_factor: %g", x_offset_factor)#
+logger.info("x_focal_point: %g", x_focal_point)
 logger.info("y_offset: %g", y_offset)
 logger.info("z_offset: %g", z_offset)
 
@@ -282,7 +293,7 @@ logger.info("xruler range / x range scale factor: %g", xruler_scale_factor)
 xruler.SetRange(bounds[0], bounds[1])
 new_xruler_range = xruler.GetRange()
 
-number_of_ticks = int(np.round(x_range[1]-x_range[0])/50)+1
+number_of_ticks = int(np.round(x_range[1]-x_range[0])/x_tick_spacing)+1
 logger.info("number of ticks: %s", number_of_ticks)
 logger.info("new  xruler range: %s", new_xruler_range)
 
@@ -299,7 +310,7 @@ label_text_property.BoldOff()
 label_text_property.ItalicOff()
 
 pointa = [bounds[0] * xscale - 0.3, 0, 0]
-pointb = [bounds[0] * xscale - 0.3, 5, 0]
+pointb = [bounds[0] * xscale - 0.3, upper_y_clip_offset, 0]
 logger.info("y ruler from %s to %s", pointa, pointb)
 yruler = plotter.add_ruler(pointb, pointa,
                            title=y_label, label_format='%.0f',
@@ -340,7 +351,8 @@ for i, concentration_function in enumerate(concentration_functions):
 
     # Calculate the lower edge center in the XY plane (Z = 0)
     focal_point = [
-        (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+        # (bounds[0] + bounds[1]) / 2 * x_offset_factor,  # X center
+        x_focal_point,
         bounds[2] + y_offset,  # Y at the lower bound
         (bounds[4] + bounds[5]) / 2  # Z center (to stay in the middle Z plane)
     ]
@@ -351,8 +363,10 @@ for i, concentration_function in enumerate(concentration_functions):
     upper_x_clip = focal_point[0] + x_clip_width / 2
     lower_x_clip = focal_point[0] - x_clip_width / 2
 
-    upper_y_clip = focal_point[1] - y_offset + 5
-    lower_y_clip = focal_point[1] - y_offset - 1
+    # upper_y_clip = focal_point[1] - y_offset + upper_y_clip_offset
+    upper_y_clip = upper_y_clip_offset
+    # lower_y_clip = focal_point[1] - y_offset + lower_y_clip_offset
+    lower_y_clip = lower_y_clip_offset
     clipping_box = [lower_x_clip, upper_x_clip, lower_y_clip, upper_y_clip, -1, 1]
 
     logger.info("clipping box: %s", clipping_box)
@@ -453,7 +467,7 @@ for i, concentration_function in enumerate(concentration_functions):
         renderer = plotter.renderer
         camera = renderer.GetActiveCamera()
 
-        world_coords = [position[0] * xscale, position[1], position[2], 1.0]
+        world_coords = [(x_focal_point+0.8*x_clip_width/2)*xscale, position[1], position[2], 1.0]
         logger.info(f"World coordinates: {world_coords}")
 
         # Get the transformation matrix from world to view coordinates
@@ -543,7 +557,7 @@ for i, concentration_function in enumerate(concentration_functions):
     xruler.SetRange(bounds[0], bounds[1])
     new_xruler_range = xruler.GetRange()
 
-    number_of_ticks = int(np.round(x_range[1] - x_range[0]) / 50) + 1
+    number_of_ticks = int(np.round(x_range[1] - x_range[0]) / x_tick_spacing) + 1
     logger.info("number of ticks: %s", number_of_ticks)
     logger.info("new  xruler range: %s", new_xruler_range)
 
@@ -551,7 +565,7 @@ for i, concentration_function in enumerate(concentration_functions):
     xruler.SetNumberOfLabels(number_of_ticks)
 
     pointa = [bounds[0] * xscale - 0.3, 0, 0]
-    pointb = [bounds[0] * xscale - 0.3, 5, 0]
+    pointb = [bounds[0] * xscale - 0.3, upper_y_clip_offset, 0]
     logger.info("y ruler from %s to %s", pointa, pointb)
     yruler = plotter.add_ruler(pointb, pointa,
                                title=y_label,
@@ -559,6 +573,10 @@ for i, concentration_function in enumerate(concentration_functions):
                                flip_range=True,
                                font_size_factor=0.8,
                                label_size_factor=0.7)
+
+    yruler.AdjustLabelsOff()
+    yruler.SetNumberOfLabels(int(upper_y_clip_offset)+1)
+
     title_text_property = yruler.GetTitleTextProperty()
     title_text_property.BoldOff()
     title_text_property.ItalicOff()
