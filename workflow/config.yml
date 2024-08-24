@@ -1,4 +1,4 @@
-in_prefix: 'data/profiles'
+in_prefix: 'in/profiles'
 out_prefix: 'out'
 
 number_of_species: 2

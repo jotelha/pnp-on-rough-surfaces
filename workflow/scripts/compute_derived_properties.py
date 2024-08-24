@@ -33,13 +33,13 @@ potential_bias = potential_bias_SI / thermal_voltage
 with open(input.surface_charge_json_file, 'r') as file:
     surface_charge_data = json.load(file)
 
-with open(input.surface_integrals_json_file, 'r') as file:
-    surface_integrals_data = json.load(file)
+with open(input.volume_integrals_json_file, 'r') as file:
+    volume_integrals_data = json.load(file)
 
 with open(input.profile_properties_json_file, 'r') as file:
     profile_properties_data = json.load(file)
 
-data = {**surface_charge_data, **surface_integrals_data, **profile_properties_data}
+data = {**surface_charge_data, **volume_integrals_data, **profile_properties_data}
 
 amount_of_substance_per_real_surface_area = []
 amount_of_substance_per_apparent_surface_area = []
