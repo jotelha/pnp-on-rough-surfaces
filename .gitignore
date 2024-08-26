@@ -1,5 +1,6 @@
 *.ipynb
 *.html
+*.png
 .idea/
 .snakemake/
 .ipynb_checkpoints/
