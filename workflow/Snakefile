@@ -195,7 +195,7 @@ rule plot_surface_excess_global_with_gpr:
         svg_file=f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
         png_file=f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
     log:
-        f"{out_prefix}/surface_excess_global_with_gpr_plots_plots/{{profile}}_plot_surface_excess_global_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+        f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_plot_surface_excess_global_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
         "scripts/plot_surface_excess_global_with_gpr.py"
 
