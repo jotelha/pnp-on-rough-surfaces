@@ -5,11 +5,11 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-# debye_length = config["debye_length"]
-potential_bias = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]
+
+potential_bias_SI = float(wildcards.potential)
 
 mesh_msh = input.mesh_msh
 
@@ -33,7 +33,7 @@ pnp_2d = PoissonNernstPlanckSystemFEniCSx2d(
 for i in range(number_of_species):
     pnp_2d.apply_concentration_dirichlet_bc(i, pnp_2d.c_scaled[i], 2)
 
-delta_u_scaled = potential_bias / pnp_2d.u_unit
+delta_u_scaled = potential_bias_SI / pnp_2d.u_unit
 
 pnp_2d.apply_potential_dirichlet_bc(delta_u_scaled, 4)
 pnp_2d.apply_potential_dirichlet_bc(0.0, 2)

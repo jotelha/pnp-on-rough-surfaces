@@ -5,12 +5,13 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-potential_bias_SI = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]
 temperature = config["temperature"]
 relative_permittivity = config["relative_permittivity"]
+
+potential_bias_SI = float(wildcards.potential)
 
 profile_csv = input.profile_csv
 profile_label = wildcards.profile

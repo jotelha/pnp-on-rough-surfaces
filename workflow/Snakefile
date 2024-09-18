@@ -14,6 +14,8 @@ reference_profile_label = config["reference_profile_label"]
 
 number_of_species = len(config["number_charges"])
 
+potential_bias_values = config["potential_bias_values"]
+
 length_scale_values = config["length_scale_values"]
 signal_variance_values = config["signal_variance_values"]
 
@@ -40,17 +42,17 @@ rule compute_profile_properties:
     input:
         profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
     output:
-        json_file=f"{out_prefix}/profile_properties/{{profile}}.json"
+        json_file=f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json"
     log:
-        f"{out_prefix}/profile_properties/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.log"
     script:
         "scripts/compute_profile_properties.py"
 
 rule aggregate_profile_properties:
     input:
-        expand(f"{out_prefix}/profile_properties/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json", profile=profile_labels)
     output:
-        csv_file=f"{out_prefix}/profile_properties/profile_properties.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/profile_properties/profile_properties.csv"
     run:
         import json
         import pandas as pd
@@ -79,166 +81,166 @@ rule solve:
     input:
         mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
     output:
-        solution_checkpoint_bp=directory(f"{out_prefix}/checkpoint/{{profile}}.bp")
+        solution_checkpoint_bp=directory(f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.bp")
     log:
-        f"{out_prefix}/checkpoint/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.log"
     script:
         "scripts/solve.py"
 
 rule interpolate:
     input:
-        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+        solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.bp"
     output:
-        interpolated_solution_checkpoint_bp=directory(f"{out_prefix}/interpolation/{{profile}}.bp")
+        interpolated_solution_checkpoint_bp=directory(f"{out_prefix}/potential_{{potential}}/interpolation/{{profile}}.bp")
     log:
-        f"{out_prefix}/interpolation/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/interpolation/{{profile}}.log"
     script:
         "scripts/interpolate.py"
 
 rule scale:
     input:
-        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/interpolation/{{profile}}.bp"
     output:
-        *[f"{out_prefix}/solutions/{{profile}}_concentration_{i}.xdmf" for i in range(number_of_species)],
-        dimensional_solution_checkpoint_bp=directory(f"{out_prefix}/solutions/{{profile}}.bp"),
-        dimensional_potential_xdmf=f"{out_prefix}/solutions/{{profile}}_potential.xdmf"
+        *[f"{out_prefix}/potential_{{potential}}/solutions/{{profile}}_concentration_{i}.xdmf" for i in range(number_of_species)],
+        dimensional_solution_checkpoint_bp=directory(f"{out_prefix}/potential_{{potential}}/solutions/{{profile}}.bp"),
+        dimensional_potential_xdmf=f"{out_prefix}/potential_{{potential}}/solutions/{{profile}}_potential.xdmf"
     log:
-        f"{out_prefix}/solutions/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/solutions/{{profile}}.log"
     script:
         "scripts/scale.py"
 
 rule compute_volume_integrals:
      input:
-        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp"
+        solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.bp"
      output:
-        json_file=f"{out_prefix}/volume_integrals/{{profile}}.json"
+        json_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.json"
      log:
-        f"{out_prefix}/volume_integrals/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.log"
      script:
         "scripts/compute_volume_integrals.py"
 
 rule compute_surface_charge:
     input:
-        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp",
+        solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.bp",
     output:
-        json_file = f"{out_prefix}/surface_charge/{{profile}}.json"
+        json_file = f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.json"
     log:
-        f"{out_prefix}/surface_charge/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.log"
     script:
         "scripts/compute_surface_charge.py"
 
 
 rule compute_surface_integrals:
     input:
-        solution_checkpoint_bp=f"{out_prefix}/checkpoint/{{profile}}.bp",
+        solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.bp",
         mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh"
     output:
-        integrals_csv=f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
+        integrals_csv=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
     log:
-        f"{out_prefix}/surface_integrals/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}.log"
     script:
         "scripts/compute_surface_integrals.py"
 
 rule gpr_on_surface_integrals:
     input:
-        csv_file = f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
     output:
-        ELBO_histogram_png=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/ELBO_histogram.png",
-        minibatch_speedup_png=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/minibatch_speedup.png",
-        predictions_before_training_png=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predictions_before_training.png",
-        convergence_png=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/convergence.png",
-        predictions_after_training_png=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predictions_after_training.png",
-        X_txt=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt",
-        predicted_Y_txt=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt",
-        predicted_variance_txt=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt",
-        model_txt=f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/model.txt",
+        ELBO_histogram_png=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/ELBO_histogram.png",
+        minibatch_speedup_png=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/minibatch_speedup.png",
+        predictions_before_training_png=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predictions_before_training.png",
+        convergence_png=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/convergence.png",
+        predictions_after_training_png=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predictions_after_training.png",
+        X_txt=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt",
+        predicted_Y_txt=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt",
+        predicted_variance_txt=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt",
+        model_txt=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/model.txt",
     log:
-        f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/gpr_on_surface_integrals.log"
+        f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{{species}}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/gpr_on_surface_integrals.log"
     script:
         "scripts/gpr_on_surface_integrals.py"
 
 rule plot_surface_excess_local_with_gpr:
     input:
-        csv_file = f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
-        reference_csv_file= f"{out_prefix}/surface_integrals/{reference_profile_label}_integrals.csv",
-        *[f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
-        *[f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
-        *[f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
+        *[f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
     output:
-        svg_file=f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
-        png_file=f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
     log:
-        f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_plot_surface_excess_local_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+        f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_gpr_plots/{{profile}}_plot_surface_excess_local_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
         "scripts/plot_surface_excess_local_with_gpr.py"
 
 rule plot_surface_excess_local:
     input:
-        csv_file = f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
-        reference_csv_file= f"{out_prefix}/surface_integrals/{reference_profile_label}_integrals.csv",
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
     output:
-        svg_file=f"{out_prefix}/surface_excess_local_plots/{{profile}}_surface_excess.svg",
-        png_file=f"{out_prefix}/surface_excess_local_plots/{{profile}}_surface_excess.png"
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_surface_excess.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_surface_excess.png"
     log:
-        f"{out_prefix}/surface_excess_local_plots/{{profile}}_plot_surface_excess_local.log"
+        f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_plot_surface_excess_local.log"
     script:
         "scripts/plot_surface_excess_local.py"
 
 rule plot_surface_excess_global_with_gpr:
     input:
-        csv_file = f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
-        reference_csv_file= f"{out_prefix}/surface_integrals/{reference_profile_label}_integrals.csv",
-        *[f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
-        *[f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
-        *[f"{out_prefix}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
+        *[f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/X.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_Y.txt" for i in range(number_of_species)],
+        *[f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_excess_concentration_integral_{i}_gpr/length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}/predicted_variance.txt" for i in range(number_of_species)],
     output:
-        svg_file=f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
-        png_file=f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png"
     log:
-        f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_plot_surface_excess_global_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
+        f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_gpr_plots/{{profile}}_plot_surface_excess_global_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
         "scripts/plot_surface_excess_global_with_gpr.py"
 
 rule plot_surface_excess_global:
     input:
-        csv_file = f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv",
-        reference_csv_file= f"{out_prefix}/surface_integrals/{reference_profile_label}_integrals.csv",
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
     output:
-        svg_file=f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.svg",
-        png_file=f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.png"
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_surface_excess.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_surface_excess.png"
     log:
-        f"{out_prefix}/surface_excess_global_plots/{{profile}}_plot_surface_excess_global.log"
+        f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_plot_surface_excess_global.log"
     script:
         "scripts/plot_surface_excess_global.py"
 
 rule compute_derived_properties:
     input:
-        surface_charge_json_file= f"{out_prefix}/surface_charge/{{profile}}.json",
-        volume_integrals_json_file=f"{out_prefix}/volume_integrals/{{profile}}.json",
-        profile_properties_json_file=f"{out_prefix}/profile_properties/{{profile}}.json"
+        surface_charge_json_file= f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.json",
+        volume_integrals_json_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.json",
+        profile_properties_json_file=f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json"
     output:
-        json_file=f"{out_prefix}/derived_properties/{{profile}}.json"
+        json_file=f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.json"
     log:
-        f"{out_prefix}/derived_properties/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.log"
     script:
         "scripts/compute_derived_properties.py"
 
 rule compute_comparative_properties:
     input:
-        json_file=f"{out_prefix}/derived_properties/{{profile}}.json",
-        reference_json_file=f"{out_prefix}/derived_properties/{reference_profile_label}.json",
+        json_file=f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.json",
+        reference_json_file=f"{out_prefix}/potential_{{potential}}/derived_properties/{reference_profile_label}.json",
     output:
-        json_file=f"{out_prefix}/comparative_properties/{{profile}}.json"
+        json_file=f"{out_prefix}/potential_{{potential}}/comparative_properties/{{profile}}.json"
     log:
-        f"{out_prefix}/comparative_properties/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/comparative_properties/{{profile}}.log"
     script:
          "scripts/compute_comparative_properties.py"
 
 rule aggregate_volume_integrals:
     input:
-        expand(f"{out_prefix}/volume_integrals/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.json", profile=profile_labels)
     output:
-        csv_file=f"{out_prefix}/volume_integrals/volume_integrals.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/volume_integrals.csv"
     run:
         import json
         import pandas as pd
@@ -254,9 +256,9 @@ rule aggregate_volume_integrals:
 
 rule aggregate_surface_charges:
     input:
-        expand(f"{out_prefix}/surface_charge/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.json", profile=profile_labels)
     output:
-        csv_file=f"{out_prefix}/surface_charge/surface_charge.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/surface_charge/surface_charge.csv"
     run:
         import json
         import pandas as pd
@@ -272,9 +274,9 @@ rule aggregate_surface_charges:
 
 rule aggregate_derived_properties:
     input:
-        expand(f"{out_prefix}/derived_properties/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.json", profile=profile_labels)
     output:
-        csv_file=f"{out_prefix}/derived_properties/derived_properties.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/derived_properties/derived_properties.csv"
     run:
         import json
         import pandas as pd
@@ -290,9 +292,9 @@ rule aggregate_derived_properties:
 
 rule aggregate_comparative_properties:
     input:
-        expand(f"{out_prefix}/comparative_properties/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{potential}}/comparative_properties/{{profile}}.json", profile=profile_labels)
     output:
-        csv_file=f"{out_prefix}/comparative_properties/comparative_properties.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv"
     run:
         import json
         import pandas as pd
@@ -308,9 +310,9 @@ rule aggregate_comparative_properties:
 
 rule plot:
     input:
-        csv_file=f"{out_prefix}/volume_integrals/volume_integrals.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/volume_integrals.csv"
     output:
-        png_file=f"{out_prefix}/volume_integrals/volume_integrals.png"
+        png_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/volume_integrals.png"
     run:
         import pandas as pd
         import seaborn as sns
@@ -326,76 +328,76 @@ rule plot:
 
 rule generate_comparative_plots:
     input:
-        csv_file=f"{out_prefix}/comparative_properties/comparative_properties.csv"
+        csv_file=f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv"
     output:
-        output_dir=directory(f"{out_prefix}/comparative_plots")
+        output_dir=directory(f"{out_prefix}/potential_{{potential}}/comparative_plots")
     script:
         "scripts/generate_comparative_plots.py"
 
 rule plot_solution_2d_global:
     priority: 50
     input:
-        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/interpolation/{{profile}}.bp"
     output:
-        *[f"{out_prefix}/plot_solution_2d_global/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
-        potential_png=f"{out_prefix}/plot_solution_2d_global/{{profile}}_potential.png",
+        *[f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
+        potential_png=f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}_potential.png",
     log:
-        f"{out_prefix}/plot_solution_2d_global/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}.log"
     script:
         "scripts/plot_solution_2d_global.py"
 
 rule plot_solution_2d_local:
     priority: 50
     input:
-        interpolated_solution_checkpoint_bp=f"{out_prefix}/interpolation/{{profile}}.bp"
+        interpolated_solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/interpolation/{{profile}}.bp"
     output:
-        *[f"{out_prefix}/plot_solution_2d_local/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
-        potential_png=f"{out_prefix}/plot_solution_2d_local/{{profile}}_potential.png",
+        *[f"{out_prefix}/potential_{{potential}}/plot_solution_2d_local/{{profile}}_concentration_{i}.png" for i in range(number_of_species)],
+        potential_png=f"{out_prefix}/potential_{{potential}}/plot_solution_2d_local/{{profile}}_potential.png",
     log:
-        f"{out_prefix}/plot_solution_2d_local/{{profile}}.log"
+        f"{out_prefix}/potential_{{potential}}/plot_solution_2d_local/{{profile}}.log"
     script:
         "scripts/plot_solution_2d_local.py"
 
 rule plot_solution_1d:
     priority: 50
     output:
-        png_file = f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.png",
-        svg_file = f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.svg"
+        png_file = f"{out_prefix}/potential_{{potential}}/plot_solution_1d/electrochemical_double_layer.png",
+        svg_file = f"{out_prefix}/potential_{{potential}}/plot_solution_1d/electrochemical_double_layer.svg"
     log:
-        f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.log"
+        f"{out_prefix}/potential_{{potential}}/plot_solution_1d/electrochemical_double_layer.log"
     script:
         "scripts/plot_solution_1d.py"
 
 
 rule single_result:
     input:
-        f"{out_prefix}/surface_integrals/{profile_labels[0]}_integrals_with_gpr_length_scale_1_signal_variance_1e-4_length_scale_100_long_signal_variance_1.png",
-        f"{out_prefix}/plot_solution_2d/{profile_labels[0]}_potential.png"
+        f"{out_prefix}/potential_{potential_bias_values[0]}/surface_integrals/{profile_labels[0]}_integrals_with_gpr_length_scale_1_signal_variance_1e-4_length_scale_100_long_signal_variance_1.png",
+        f"{out_prefix}/potential_{potential_bias_values[0]}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
 rule default:
     input:
-        expand(f"{out_prefix}/plot_solution_2d_global/{{profile}}_potential.png", profile=profile_labels),
-        expand(f"{out_prefix}/plot_solution_2d_local/{{profile}}_potential.png", profile=profile_labels),
-        expand(f"{out_prefix}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}_potential.png", profile=profile_labels),
+        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_local/{{profile}}_potential.png", profile=profile_labels),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
             profile=profile_labels,
             signal_variance=signal_variance_values,
             length_scale=length_scale_values,
             long_signal_variance=long_signal_variance_values,
             long_length_scale=long_length_scale_values),
-        expand(f"{out_prefix}/surface_excess_local_plots/{{profile}}_surface_excess.png", profile=profile_labels),
-        expand(f"{out_prefix}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_surface_excess.png", profile=profile_labels),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
             profile=profile_labels,
             signal_variance=signal_variance_values,
             length_scale=length_scale_values,
             long_signal_variance=long_signal_variance_values,
             long_length_scale=long_length_scale_values),
-        expand(f"{out_prefix}/surface_excess_global_plots/{{profile}}_surface_excess.png", profile=profile_labels),
-        expand(f"{out_prefix}/surface_integrals/{{profile}}_integrals.csv", profile=profile_labels),
-        f"{out_prefix}/plot_solution_1d/electrochemical_double_layer.png",
-        f"{out_prefix}/volume_integrals/volume_integrals.png",
-        f"{out_prefix}/profile_properties/profile_properties.csv",
-        f"{out_prefix}/derived_properties/derived_properties.csv",
-        f"{out_prefix}/comparative_properties/comparative_properties.csv",
-        f"{out_prefix}/comparative_plots"
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_surface_excess.png", profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv", profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_1d/electrochemical_double_layer.png", potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/volume_integrals/volume_integrals.png", potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/profile_properties/profile_properties.csv", potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/derived_properties/derived_properties.csv", potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv", potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values)
     default_target: True
 

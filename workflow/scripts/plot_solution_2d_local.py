@@ -9,8 +9,9 @@ logfile = snakemake.log[0]
 
 number_of_species = config["number_of_species"]
 temperature = config["temperature"]
-potential_bias_SI = config["potential_bias"]
 checkpoint_bp = input.interpolated_solution_checkpoint_bp
+
+potential_bias_SI = wildcards.potential
 
 scale_factor = 2
 
