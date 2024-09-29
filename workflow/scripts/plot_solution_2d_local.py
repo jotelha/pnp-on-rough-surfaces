@@ -11,7 +11,7 @@ number_of_species = config["number_of_species"]
 temperature = config["temperature"]
 checkpoint_bp = input.interpolated_solution_checkpoint_bp
 
-potential_bias_SI = wildcards.potential
+potential_bias_SI = float(wildcards.potential)
 
 scale_factor = 2
 

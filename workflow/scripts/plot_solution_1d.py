@@ -13,7 +13,7 @@ relative_permittivity = config["relative_permittivity"]
 
 height_normalized = config["height_normalized"]
 
-potential_bias_SI = wildcards.potential
+potential_bias_SI = float(wildcards.potential)
 
 import numpy as np
 import scipy.constants as sc

@@ -10,7 +10,7 @@ logfile = snakemake.log[0]
 number_of_species = config["number_of_species"]
 temperature = config["temperature"]
 
-potential_bias_SI = wildcards.potential
+potential_bias_SI = float(wildcards.potential)
 
 checkpoint_bp = input.interpolated_solution_checkpoint_bp
 

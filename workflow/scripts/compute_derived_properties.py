@@ -11,7 +11,7 @@ number_of_species = config["number_of_species"]
 temperature = config["temperature"]
 relative_permittivity = config["relative_permittivity"]
 
-potential_bias_SI = wildcards.potential
+potential_bias_SI = float(wildcards.potential)
 
 import json
 
