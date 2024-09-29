@@ -50,7 +50,7 @@ rule compute_profile_properties:
 
 rule aggregate_profile_properties:
     input:
-        expand(f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{{{potential}}}}/profile_properties/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/potential_{{potential}}/profile_properties/profile_properties.csv"
     run:
@@ -238,7 +238,7 @@ rule compute_comparative_properties:
 
 rule aggregate_volume_integrals:
     input:
-        expand(f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{{{potential}}}}/volume_integrals/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/volume_integrals.csv"
     run:
@@ -256,7 +256,7 @@ rule aggregate_volume_integrals:
 
 rule aggregate_surface_charges:
     input:
-        expand(f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{{{potential}}}}/surface_charge/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/potential_{{potential}}/surface_charge/surface_charge.csv"
     run:
@@ -274,7 +274,7 @@ rule aggregate_surface_charges:
 
 rule aggregate_derived_properties:
     input:
-        expand(f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{{{potential}}}}/derived_properties/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/potential_{{potential}}/derived_properties/derived_properties.csv"
     run:
@@ -292,7 +292,7 @@ rule aggregate_derived_properties:
 
 rule aggregate_comparative_properties:
     input:
-        expand(f"{out_prefix}/potential_{{potential}}/comparative_properties/{{profile}}.json", profile=profile_labels)
+        expand(f"{out_prefix}/potential_{{{{potential}}}}/comparative_properties/{{profile}}.json", profile=profile_labels)
     output:
         csv_file=f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv"
     run:
@@ -376,23 +376,30 @@ rule single_result:
 
 rule default:
     input:
-        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}_potential.png", profile=profile_labels),
-        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_local/{{profile}}_potential.png", profile=profile_labels),
+        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}_potential.png",
+            profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_local/{{profile}}_potential.png",
+            profile=profile_labels, potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+            potential=potential_bias_values,
             profile=profile_labels,
             signal_variance=signal_variance_values,
             length_scale=length_scale_values,
             long_signal_variance=long_signal_variance_values,
             long_length_scale=long_length_scale_values),
-        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_surface_excess.png", profile=profile_labels),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_surface_excess.png",
+            profile=profile_labels, potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
+            potential=potential_bias_values,
             profile=profile_labels,
             signal_variance=signal_variance_values,
             length_scale=length_scale_values,
             long_signal_variance=long_signal_variance_values,
             long_length_scale=long_length_scale_values),
-        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_surface_excess.png", profile=profile_labels, potential=potential_bias_values),
-        expand(f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv", profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_surface_excess.png",
+            profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+            profile=profile_labels, potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/plot_solution_1d/electrochemical_double_layer.png", potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/volume_integrals/volume_integrals.png", potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/profile_properties/profile_properties.csv", potential=potential_bias_values),
