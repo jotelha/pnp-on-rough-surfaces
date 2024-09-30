@@ -75,6 +75,9 @@ surface_excess_local_with_gpr:
     - [ -1.74, -1.71, -1.68 ]
     - [ 11.8, 12, 12.2 ]
     -
+
+unit: um
+
 profiles:
   rectangle_with_single_rough_edge_after_4N_friction_test:
     # profile properties

@@ -38,6 +38,16 @@ rule homogenize:
         shutil.copy(infile, output.profile_csv)
         logger.info("Copied %s to %s", infile, output.profile_csv)
 
+rule compute_roughness_properties:
+    input:
+        profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
+    output:
+         json_file=f"{out_prefix}/roughness_properties/{{profile}}.json"
+    log:
+        f"{out_prefix}/roughness_properties/{{profile}}.log"
+    script:
+        "scripts/compute_roughness_properties.py"
+
 rule compute_profile_properties:
     input:
         profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
@@ -64,7 +74,25 @@ rule aggregate_profile_properties:
             data_records.append(data)
 
         df = pd.DataFrame.from_records(data_records)
-        df.to_csv(output.csv_file)
+        df.to_csv(output.csv_file, index=False)
+
+rule aggregate_roughness_properties:
+    input:
+        expand(f"{out_prefix}/roughness_properties/{{profile}}.json", profile=profile_labels)
+    output:
+        csv_file=f"{out_prefix}/roughness_properties/roughness_properties.csv"
+    run:
+        import json
+        import pandas as pd
+
+        data_records = []
+        for json_file in input:
+            with open(json_file, 'r') as file:
+                data = json.load(file)
+            data_records.append(data)
+
+        df = pd.DataFrame.from_records(data_records)
+        df.to_csv(output.csv_file, index=False)
 
 rule mesh:
     input:
@@ -217,7 +245,8 @@ rule compute_derived_properties:
     input:
         surface_charge_json_file= f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.json",
         volume_integrals_json_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.json",
-        profile_properties_json_file=f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json"
+        profile_properties_json_file=f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json",
+        roughness_properties_json_file=f"{out_prefix}/roughness_properties/{{profile}}.json",
     output:
         json_file=f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.json"
     log:
@@ -252,7 +281,7 @@ rule aggregate_volume_integrals:
             data_records.append(data)
 
         df = pd.DataFrame.from_records(data_records)
-        df.to_csv(output.csv_file)
+        df.to_csv(output.csv_file, index=False)
 
 rule aggregate_surface_charges:
     input:
@@ -270,7 +299,7 @@ rule aggregate_surface_charges:
             data_records.append(data)
 
         df = pd.DataFrame.from_records(data_records)
-        df.to_csv(output.csv_file)
+        df.to_csv(output.csv_file, index=False)
 
 rule aggregate_derived_properties:
     input:
@@ -288,7 +317,7 @@ rule aggregate_derived_properties:
             data_records.append(data)
 
         df = pd.DataFrame.from_records(data_records)
-        df.to_csv(output.csv_file)
+        df.to_csv(output.csv_file, index=False)
 
 rule aggregate_comparative_properties:
     input:
@@ -306,7 +335,54 @@ rule aggregate_comparative_properties:
             data_records.append(data)
 
         df = pd.DataFrame.from_records(data_records)
-        df.to_csv(output.csv_file)
+        df.to_csv(output.csv_file, index=False)
+
+rule aggregate_all:
+    input:
+        expand(f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv", potential=potential_bias_values),
+    output:
+        csv_file=f"{out_prefix}/all.csv"
+    run:
+        import pandas as pd
+
+        df = pd.concat(
+            map(pd.read_csv, input), ignore_index=True)
+
+        df.to_csv(output.csv_file, index=False)
+
+
+rule plot_potential_dependent_properties:
+    input:
+        csv_file=f"{out_prefix}/all.csv"
+    output:
+        output_dir=directory(f"{out_prefix}/potential_plots")
+    script:
+        "scripts/plot_potential_dependent_properties.py"
+
+
+rule plot_rms_height_dependent_properties:
+    input:
+        csv_file=f"{out_prefix}/all.csv"
+    output:
+        output_dir=directory(f"{out_prefix}/rms_height_plots")
+    script:
+        "scripts/plot_rms_height_dependent_properties.py"
+
+rule plot_rms_slope_dependent_properties:
+    input:
+        csv_file=f"{out_prefix}/all.csv"
+    output:
+        output_dir=directory(f"{out_prefix}/rms_slope_plots")
+    script:
+        "scripts/plot_rms_slope_dependent_properties.py"
+
+rule plot_rms_curvature_dependent_properties:
+    input:
+        csv_file=f"{out_prefix}/all.csv"
+    output:
+        output_dir=directory(f"{out_prefix}/rms_curvature_plots")
+    script:
+        "scripts/plot_rms_curvature_dependent_properties.py"
 
 rule plot:
     input:
@@ -405,6 +481,11 @@ rule default:
         expand(f"{out_prefix}/potential_{{potential}}/profile_properties/profile_properties.csv", potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/derived_properties/derived_properties.csv", potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv", potential=potential_bias_values),
-        expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values)
+        expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values),
+        f"{out_prefix}/all.csv",
+        f"{out_prefix}/potential_plots",
+        f"{out_prefix}/rms_height_plots",
+        f"{out_prefix}/rms_slope_plots",
+        f"{out_prefix}/rms_curvature_plots",
     default_target: True
 

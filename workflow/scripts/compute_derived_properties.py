@@ -40,7 +40,10 @@ with open(input.volume_integrals_json_file, 'r') as file:
 with open(input.profile_properties_json_file, 'r') as file:
     profile_properties_data = json.load(file)
 
-data = {**surface_charge_data, **volume_integrals_data, **profile_properties_data}
+with open(input.roughness_properties_json_file, 'r') as file:
+    roughness_properties_data = json.load(file)
+
+data = {**surface_charge_data, **volume_integrals_data, **profile_properties_data, **roughness_properties_data}
 
 amount_of_substance_per_real_surface_area = []
 amount_of_substance_per_apparent_surface_area = []
