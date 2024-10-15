@@ -157,7 +157,6 @@ rule compute_surface_charge:
     script:
         "scripts/compute_surface_charge.py"
 
-
 rule compute_surface_integrals:
     input:
         solution_checkpoint_bp=f"{out_prefix}/potential_{{potential}}/checkpoint/{{profile}}.bp",
@@ -168,6 +167,14 @@ rule compute_surface_integrals:
         f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}.log"
     script:
         "scripts/compute_surface_integrals.py"
+
+rule extract_surface_integrals_extrema:
+    input:
+        csv_file=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+    output:
+        json_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}.json",
+    script:
+        "scripts/extract_surface_integrals_extrema.py"
 
 rule gpr_on_surface_integrals:
     input:
@@ -201,6 +208,18 @@ rule plot_surface_excess_local_with_gpr:
         f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_gpr_plots/{{profile}}_plot_surface_excess_local_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.log"
     script:
         "scripts/plot_surface_excess_local_with_gpr.py"
+
+rule plot_surface_excess_local_with_rolling_mean:
+    input:
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
+    output:
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_rolling_mean_plots/{{profile}}_surface_excess.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_rolling_mean_plots/{{profile}}_surface_excess.png"
+    log:
+        f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_rolling_mean_plots/{{profile}}_plot_surface_excess_local.log"
+    script:
+        "scripts/plot_surface_excess_local_with_rolling_mean.py"
 
 rule plot_surface_excess_local:
     input:
@@ -241,12 +260,25 @@ rule plot_surface_excess_global:
     script:
         "scripts/plot_surface_excess_global.py"
 
+rule plot_surface_excess_global_with_rolling_mean:
+    input:
+        csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+        reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
+    output:
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_rolling_mean_plots/{{profile}}_surface_excess.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_rolling_mean_plots/{{profile}}_surface_excess.png"
+    log:
+        f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_rolling_mean_plots/{{profile}}_plot_surface_excess_global.log"
+    script:
+        "scripts/plot_surface_excess_global.py"
+
 rule compute_derived_properties:
     input:
         surface_charge_json_file= f"{out_prefix}/potential_{{potential}}/surface_charge/{{profile}}.json",
         volume_integrals_json_file=f"{out_prefix}/potential_{{potential}}/volume_integrals/{{profile}}.json",
         profile_properties_json_file=f"{out_prefix}/potential_{{potential}}/profile_properties/{{profile}}.json",
         roughness_properties_json_file=f"{out_prefix}/roughness_properties/{{profile}}.json",
+        surface_integrals_extrema_json_file=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}.json",
     output:
         json_file=f"{out_prefix}/potential_{{potential}}/derived_properties/{{profile}}.json"
     log:
@@ -350,39 +382,13 @@ rule aggregate_all:
 
         df.to_csv(output.csv_file, index=False)
 
-
-rule plot_potential_dependent_properties:
+rule plot_global_properties:
     input:
         csv_file=f"{out_prefix}/all.csv"
     output:
-        output_dir=directory(f"{out_prefix}/potential_plots")
+        output_dir=directory(f"{out_prefix}/global_properties_plots")
     script:
-        "scripts/plot_potential_dependent_properties.py"
-
-
-rule plot_rms_height_dependent_properties:
-    input:
-        csv_file=f"{out_prefix}/all.csv"
-    output:
-        output_dir=directory(f"{out_prefix}/rms_height_plots")
-    script:
-        "scripts/plot_rms_height_dependent_properties.py"
-
-rule plot_rms_slope_dependent_properties:
-    input:
-        csv_file=f"{out_prefix}/all.csv"
-    output:
-        output_dir=directory(f"{out_prefix}/rms_slope_plots")
-    script:
-        "scripts/plot_rms_slope_dependent_properties.py"
-
-rule plot_rms_curvature_dependent_properties:
-    input:
-        csv_file=f"{out_prefix}/all.csv"
-    output:
-        output_dir=directory(f"{out_prefix}/rms_curvature_plots")
-    script:
-        "scripts/plot_rms_curvature_dependent_properties.py"
+        "scripts/plot_global_properties.py"
 
 rule plot:
     input:
@@ -465,6 +471,8 @@ rule default:
         #     long_length_scale=long_length_scale_values),
         expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_plots/{{profile}}_surface_excess.png",
             profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_local_with_rolling_mean_plots/{{profile}}_surface_excess.png",
+           profile=profile_labels, potential=potential_bias_values),
         # expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_gpr_plots/{{profile}}_surface_excess_with_gpr_length_scale_{{length_scale}}_signal_variance_{{signal_variance}}_length_scale_{{long_length_scale}}_long_signal_variance_{{long_signal_variance}}.png",
         #     potential=potential_bias_values,
         #     profile=profile_labels,
@@ -474,6 +482,8 @@ rule default:
         #     long_length_scale=long_length_scale_values),
         expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_plots/{{profile}}_surface_excess.png",
             profile=profile_labels, potential=potential_bias_values),
+        expand(f"{out_prefix}/potential_{{potential}}/surface_excess_global_with_rolling_mean_plots/{{profile}}_surface_excess.png",
+           profile=profile_labels, potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
             profile=profile_labels, potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/plot_solution_1d/electrochemical_double_layer.png", potential=potential_bias_values),
@@ -483,9 +493,6 @@ rule default:
         expand(f"{out_prefix}/potential_{{potential}}/comparative_properties/comparative_properties.csv", potential=potential_bias_values),
         expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values),
         f"{out_prefix}/all.csv",
-        f"{out_prefix}/potential_plots",
-        f"{out_prefix}/rms_height_plots",
-        f"{out_prefix}/rms_slope_plots",
-        f"{out_prefix}/rms_curvature_plots",
+        f"{out_prefix}/global_properties_plots",
     default_target: True
 

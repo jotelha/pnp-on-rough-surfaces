@@ -20,7 +20,14 @@ properties_per_species = [p.format(i)
         "amount_of_substance_per_real_surface_area_{}",
         "amount_of_substance_per_apparent_surface_area_{}",
         "d_amount_of_substance_per_real_surface_area_{}",
-        "d_amount_of_substance_per_apparent_surface_area_{}"]
+        "d_amount_of_substance_per_apparent_surface_area_{}",
+
+        "maximum_surface_excess_{}",
+        "minimum_surface_excess_{}",
+
+        "maximum_smeared_out_surface_excess_{}",
+        "minimum_smeared_out_surface_excess_{}",
+    ]
 ]
 
 properties = [
@@ -50,16 +57,45 @@ df = pd.read_csv(input.csv_file)
 
 os.makedirs(output_dir, exist_ok=True)
 for p in properties:
-    output_file = os.path.join(output_dir, f"{p}.png")
+    # plots over potential:
+    output_file = os.path.join(output_dir, f"potential_{p}.png")
     fig, ax = plt.subplots(figsize=(10, 6))  # Set the figure size as needed
     sns_plot = sns.lineplot(data=df, x="potential_bias", y=p, hue="profile", style="profile", legend=True, ax=ax)
-    # sns_plot.set_xticklabels(sns_plot.get_xticklabels(), rotation=45, horizontalalignment='right')
-    # fig = sns_plot.get_figure()
     fig.set_size_inches(10, 6)
     fig.tight_layout()
     fig.savefig(output_file)
 
-    output_file = os.path.join(output_dir, f"{p}_loglog.png")
+    # log log
+    output_file = os.path.join(output_dir, f"potential_{p}_loglog.png")
     ax.set_xscale('log')
     ax.set_yscale('log')
+    fig.savefig(output_file)
+
+    # plots over rms roughness parameters
+
+    # height
+    output_file = os.path.join(output_dir, f"rms_height_SI_{p}.png")
+    fig, ax = plt.subplots(figsize=(10, 6))  # Set the figure size as needed
+    sns_plot = sns.scatterplot(data=df, x="rms_height_SI", y=p, hue="potential_bias", style="profile", legend=True,
+                               ax=ax)
+    fig.set_size_inches(10, 6)
+    fig.tight_layout()
+    fig.savefig(output_file)
+
+    # slope
+    output_file = os.path.join(output_dir, f"rms_slope_SI_{p}.png")
+    fig, ax = plt.subplots(figsize=(10, 6))  # Set the figure size as needed
+    sns_plot = sns.scatterplot(data=df, x="rms_slope_SI", y=p, hue="potential_bias", style="profile", legend=True,
+                               ax=ax)
+    fig.set_size_inches(10, 6)
+    fig.tight_layout()
+    fig.savefig(output_file)
+
+    # curvature
+    output_file = os.path.join(output_dir, f"rms_curvature_SI_{p}.png")
+    fig, ax = plt.subplots(figsize=(10, 6))  # Set the figure size as needed
+    sns_plot = sns.scatterplot(data=df, x="rms_curvature_SI", y=p, hue="potential_bias", style="profile", legend=True,
+                               ax=ax)
+    fig.set_size_inches(10, 6)
+    fig.tight_layout()
     fig.savefig(output_file)

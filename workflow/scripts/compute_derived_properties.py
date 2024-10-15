@@ -15,7 +15,6 @@ potential_bias_SI = float(wildcards.potential)
 
 import json
 
-import numpy as np
 import scipy.constants as sc
 
 from utils import ionic_strength, lambda_D
@@ -43,7 +42,16 @@ with open(input.profile_properties_json_file, 'r') as file:
 with open(input.roughness_properties_json_file, 'r') as file:
     roughness_properties_data = json.load(file)
 
-data = {**surface_charge_data, **volume_integrals_data, **profile_properties_data, **roughness_properties_data}
+with open(input.surface_integrals_extrema_json_file, 'r') as file:
+    surface_integrals_extrema_data = json.load(file)
+
+data = {
+    **surface_charge_data,
+    **volume_integrals_data,
+    **profile_properties_data,
+    **roughness_properties_data,
+    **surface_integrals_extrema_data
+}
 
 amount_of_substance_per_real_surface_area = []
 amount_of_substance_per_apparent_surface_area = []

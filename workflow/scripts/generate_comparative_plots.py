@@ -20,7 +20,12 @@ properties_per_species = [p.format(i)
         "amount_of_substance_per_real_surface_area_{}",
         "amount_of_substance_per_apparent_surface_area_{}",
         "d_amount_of_substance_per_real_surface_area_{}",
-        "d_amount_of_substance_per_apparent_surface_area_{}"]
+        "d_amount_of_substance_per_apparent_surface_area_{}",
+        "maximum_surface_excess_{}",
+        "minimum_surface_excess_{}",
+        "maximum_smeared_out_surface_excess_{}",
+        "minimum_smeared_out_surface_excess_{}",
+    ]
 ]
 
 properties = [
