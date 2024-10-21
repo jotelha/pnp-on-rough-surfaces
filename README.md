@@ -71,6 +71,37 @@ snakemake --rulegraph | dot -Tsvg > rulegraph.svg
 snakemake --filegraph | dot -Tsvg > filegraph.svg
 ```
 
+
+## Snakemake interactive notebook editing
+
+To be able to interactively edit a notebook with a command like
+
+```bash
+snakemake --cores 1 --edit-notebook out/figures/surplus_surface_excess_potential_bias.svg --notebook-listen 0.0.0.0:8889
+```
+
+launch the conainer embedding snakemake with additional ports open first, e.g.
+
+```bash
+docker run -v $(pwd):/tmp/data --init -ti -p 8888:8888 -p 8889:8889 imteksim/dolfinx-tutorial-extended
+```
+
+Generate a jupyter configuration with
+
+```console
+# jupyter notebook --generate-config
+Writing default config to: /root/.jupyter/jupyter_notebook_config.py
+```
+
+and append the lines
+
+```bash
+echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_notebook_config.py
+# echo "c.NotebookApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_notebook_config.py
+```
+
+to the config file.
+
 ## Plot with pyvista
 
 Launch a display server before running snakemake, e.g. with
@@ -90,3 +121,10 @@ export MATPLOTLIBRC="$(pwd)/matplotlibrc"
 ```
 
 before running plotting scripts.
+
+Install Arial with
+
+```bash
+apt update
+apt install ttf-mscorefonts-installer
+```

@@ -21,6 +21,10 @@ upper_boundary_mesh_size: 1.0  # debye lengths
 line_integral_rolling_mean_window: 500
 line_integral_rolling_mean_window_std: 100
 
+# on certain evaluations on the profile,
+# relative lateral stretch to discard on the left and right boundaries
+relative_lateral_cutoff: 0.02
+
 # GPR parameters:
 # length_scale_values: [10, 1]
 # signal_variance_values: [1.e-3, 1.e-2, 0.1, 1]

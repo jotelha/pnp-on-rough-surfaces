@@ -27,6 +27,15 @@ properties_per_species = [p.format(i)
 
         "maximum_smeared_out_surface_excess_{}",
         "minimum_smeared_out_surface_excess_{}",
+
+        "surface_excess_per_real_surface_area_{}",
+        "surface_excess_per_apparent_surface_area_{}",
+
+        "relative_surface_excess_per_real_surface_area_{}",
+        "relative_surface_excess_per_apparent_surface_area_{}",
+
+        "relative_maximum_surface_excess_{}",
+        "relative_minimum_surface_excess_{}"
     ]
 ]
 

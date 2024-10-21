@@ -173,6 +173,8 @@ rule extract_surface_integrals_extrema:
         csv_file=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
     output:
         json_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}.json",
+    log:
+        f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_extract_extrema.log"
     script:
         "scripts/extract_surface_integrals_extrema.py"
 
@@ -450,13 +452,25 @@ rule plot_solution_1d:
     script:
         "scripts/plot_solution_1d.py"
 
+rule figures:
+    input:
+        csv_file=f"{out_prefix}/all.csv"
+    output:
+        surplus_surface_excess_potential_bias_svg=f"{out_prefix}/figures/surplus_surface_excess_potential_bias.svg",
+        surplus_surface_excess_potential_bias_with_legend_svg=f"{out_prefix}/figures/surplus_surface_excess_potential_bias_with_legend.svg",
+        relative_local_surface_excess_potential_bias_svg=f"{out_prefix}/figures/relative_local_surface_excess_potential_bias.svg",
+        relative_local_surface_excess_potential_bias_with_legend_svg=f"{out_prefix}/figures/relative_local_surface_excess_potential_bias_with_legend.svg"
+    log:
+        notebook="figures/figures.ipynb"
+    notebook:
+        "notebook/figures.py.ipynb"
 
 rule single_result:
     input:
         f"{out_prefix}/potential_{potential_bias_values[0]}/surface_integrals/{profile_labels[0]}_integrals_with_gpr_length_scale_1_signal_variance_1e-4_length_scale_100_long_signal_variance_1.png",
         f"{out_prefix}/potential_{potential_bias_values[0]}/plot_solution_2d/{profile_labels[0]}_potential.png"
 
-rule default:
+rule all:
     input:
         expand(f"{out_prefix}/potential_{{potential}}/plot_solution_2d_global/{{profile}}_potential.png",
             profile=profile_labels, potential=potential_bias_values),
@@ -494,5 +508,9 @@ rule default:
         expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values),
         f"{out_prefix}/all.csv",
         f"{out_prefix}/global_properties_plots",
-    default_target: True
 
+rule default:
+    input:
+        f"{out_prefix}/all.csv",
+        f"{out_prefix}/global_properties_plots",
+    default_target: True

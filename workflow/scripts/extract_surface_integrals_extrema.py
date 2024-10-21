@@ -1,16 +1,41 @@
 input = snakemake.input
 output = snakemake.output
 config = snakemake.config
+logfile = snakemake.log[0]
 
 csv_file = input.csv_file
 json_file = output.json_file
 
 number_of_species = config["number_of_species"]
 
+relative_lateral_cutoff = config["relative_lateral_cutoff"]
+
+import logging
+
+logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 import json
 import pandas as pd
 
 df = pd.read_csv(csv_file)
+
+xmin = df["x"].min()
+xmax = df["x"].max()
+
+logger.debug("Read profile with min, max x (%g, %g)", xmin, xmax)
+
+lateral_span = (xmax - xmin)
+discarded_dx = lateral_span * relative_lateral_cutoff
+
+logger.debug("Discard relative %f portion of total lateral span %g: %g", relative_lateral_cutoff, lateral_span, discarded_dx)
+
+lower_boundary = xmin + discarded_dx
+upper_boundary = xmax - discarded_dx
+
+logger.debug("Filter data by lower and upper boundary (%g, %g)", lower_boundary, upper_boundary)
+
+df = df[(df["x"] > lower_boundary) & (df["x"] < upper_boundary)]
 
 line_integral_rolling_mean_window = config["line_integral_rolling_mean_window"]
 line_integral_rolling_mean_window_std = config["line_integral_rolling_mean_window_std"]
