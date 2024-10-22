@@ -27,15 +27,16 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="2.9718855"
-     inkscape:cx="2.1871637"
-     inkscape:cy="112.05008"
+     inkscape:zoom="2.1014404"
+     inkscape:cx="-88.510719"
+     inkscape:cy="141.8075"
      inkscape:window-width="1920"
      inkscape:window-height="1016"
      inkscape:window-x="1920"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" /><defs
+     inkscape:current-layer="layer1"
+     showgrid="false" /><defs
      id="defs1" /><g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
@@ -117,25 +118,25 @@
          transform="rotate(7.3848028)">flat</text></g><image
        preserveAspectRatio="none"
        inkscape:svg-dpi="600"
-       width="28.949518"
-       height="6.2291212"
+       width="34.62772"
+       height="7.4509101"
        style="image-rendering:optimizeQuality"
        xlink:href="fig_Yd_rectangle_with_single_rough_edge_parallel.svg"
        id="image1-3"
        x="14.464297"
-       y="45.163242"
+       y="43.941452"
        sodipodi:absref="/mnt/dat2/git/fem/2024-09-18-pnp-on-rough-surfaces/fig_Yd_rectangle_with_single_rough_edge_parallel.svg" /></g><g
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Layer 2"><g
        id="text_13-3"
-       style="stroke-linecap:butt;stroke-linejoin:round;fill:#2b9f2b;fill-opacity:1"
-       transform="matrix(0.15238732,0,0,0.15238732,8.8888505,42.42379)"><!-- $R_q = 50.6$ --><g
+       style="fill:#2b9f2b;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"
+       transform="matrix(0.15238732,0,0,0.15238732,14.484524,41.38815)"><!-- $R_q = 50.6$ --><g
          transform="translate(179.1089,27.3)"
          id="g63-7"
-         style="stroke-linecap:butt;stroke-linejoin:round;fill:#2b9f2b;fill-opacity:1"><text
+         style="fill:#2b9f2b;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><text
            id="text63-7"
-           style="stroke-linecap:butt;stroke-linejoin:round;fill:#2b9f2b;fill-opacity:1"><tspan
+           style="fill:#2b9f2b;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><tspan
              style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#2b9f2b;fill-opacity:1"
              x="0"
              y="-0.578125"
@@ -147,16 +148,10 @@
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#2b9f2b;fill-opacity:1"
              x="13.613281 23.94043 30.302734 36.665039 39.84375"
              y="-0.578125"
-             id="tspan63-7">=50.6</tspan></text></g></g><ellipse
-       style="fill:#2b9f2b;fill-opacity:1;stroke:none;stroke-width:0.264999;stroke-opacity:1;paint-order:stroke markers fill"
-       id="path1"
-       cx="21.731268"
-       cy="46.714005"
-       rx="0.41754791"
-       ry="0.39763883" /><ellipse
-       style="fill:#2b9f2b;fill-opacity:1;stroke:none;stroke-width:0.264999;stroke-opacity:1;paint-order:stroke markers fill"
-       id="path1-1"
-       cx="21.561424"
-       cy="50.054531"
-       rx="0.41754791"
-       ry="0.39763883" /></g></svg>
+             id="tspan63-7">=50.6</tspan></text></g></g><path
+       id="use30"
+       d="m 22.684984,46.422346 0.900598,-0.900598 m -0.900598,0 0.900598,0.900598"
+       style="fill:#2ca02c;stroke:#2ca02c;stroke-width:0.22515;stroke-linecap:butt;stroke-linejoin:round" /><path
+       id="use30-1"
+       d="m 22.540859,49.979 0.900598,-0.900598 m -0.900598,0 0.900598,0.900598"
+       style="fill:#2ca02c;stroke:#2ca02c;stroke-width:0.22515;stroke-linecap:butt;stroke-linejoin:round" /></g></svg>
