@@ -28,14 +28,14 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="2.1014404"
-     inkscape:cx="-88.510719"
-     inkscape:cy="141.8075"
+     inkscape:cx="-2.8551845"
+     inkscape:cy="126.10398"
      inkscape:window-width="1920"
      inkscape:window-height="1016"
-     inkscape:window-x="1920"
+     inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="text_13-3"
      showgrid="false" /><defs
      id="defs1" /><g
      inkscape:label="Layer 1"
@@ -54,7 +54,7 @@
        id="text_13"
        style="stroke-linecap:butt;stroke-linejoin:round"
        transform="matrix(0.34985158,-0.04534343,0.04534343,0.34985158,-37.723979,8.6117775)"><!-- $R_q = 50.6$ --><g
-         transform="translate(179.21836,28.322569)"
+         transform="translate(155.0318,28.212901)"
          id="g63"
          style="fill:#2ca02c;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><text
            id="text63"
@@ -70,7 +70,7 @@
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#2ca02c;fill-opacity:1"
              x="13.613281 23.94043 30.302734 36.665039 39.84375"
              y="-0.578125"
-             id="tspan63">=50.6</tspan></text></g><g
+             id="tspan63">=50.6 nm</tspan></text></g><g
          id="text_14"
          style="fill:#d62728;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"
          transform="rotate(-2.2247205,553.34866,592.71661)"><!-- $R_q = 49.1$ --><g
@@ -90,7 +90,7 @@
                style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#d62728;fill-opacity:1"
                x="13.613281 23.94043 30.302734 36.665039 39.84375"
                y="-0.578125"
-               id="tspan66">=49.1</tspan></text></g></g><g
+               id="tspan66">=49.1 nm</tspan></text></g></g><g
          id="text_15"
          style="fill:#9467bd;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"
          transform="rotate(7.3848028,74.33562,142.01125)"><!-- $R_q = 13.3$ --><g
@@ -98,24 +98,27 @@
            id="g69"
            style="fill:#9467bd;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><text
              id="text69"
-             style="fill:#9467bd;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><tspan
+             style="fill:#9467bd;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"
+             x="-18"
+             y="-8.3972509e-09"><tspan
                style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#9467bd;fill-opacity:1"
-               x="0"
+               x="-18"
                y="-0.578125"
                id="tspan67">R</tspan><tspan
                style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7px;line-height:normal;font-family:'DejaVu Sans';fill:#9467bd;fill-opacity:1"
-               x="6.9482422"
+               x="-11.051759"
                y="1.0625"
                id="tspan68">q</tspan><tspan
                style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#9467bd;fill-opacity:1"
-               x="13.613281 23.94043 30.302734 36.665039 39.84375"
+               x="-4.3867192 5.9404297 12.302734 18.665039 21.84375"
                y="-0.578125"
-               id="tspan69">=13.3</tspan></text></g></g><text
+               id="tspan69">=13.3 nm</tspan></text></g></g><text
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:Arial, sans-serif;text-anchor:start;fill:#808080;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"
          x="226.54759"
          y="62.406448"
          id="text70"
-         transform="rotate(7.3848028)">flat</text></g><image
+         transform="rotate(7.3848028)"
+         inkscape:label="text70">flat</text></g><image
        preserveAspectRatio="none"
        inkscape:svg-dpi="600"
        width="34.62772"
@@ -136,19 +139,20 @@
          id="g63-7"
          style="fill:#2b9f2b;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><text
            id="text63-7"
-           style="fill:#2b9f2b;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"><tspan
+           style="fill:#2b9f2b;fill-opacity:1;stroke-linecap:butt;stroke-linejoin:round"
+           x="-20.835066"><tspan
              style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#2b9f2b;fill-opacity:1"
-             x="0"
+             x="-20.835066"
              y="-0.578125"
              id="tspan61-2">R</tspan><tspan
              style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7px;line-height:normal;font-family:'DejaVu Sans';fill:#2b9f2b;fill-opacity:1"
-             x="6.9482422"
+             x="-13.886825"
              y="1.0625"
              id="tspan62-3">q</tspan><tspan
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:normal;font-family:'DejaVu Sans';fill:#2b9f2b;fill-opacity:1"
-             x="13.613281 23.94043 30.302734 36.665039 39.84375"
+             x="-7.221786 3.1053631 9.4676666 15.829971 19.008682"
              y="-0.578125"
-             id="tspan63-7">=50.6</tspan></text></g></g><path
+             id="tspan63-7">=50.6 nm</tspan></text></g></g><path
        id="use30"
        d="m 22.684984,46.422346 0.900598,-0.900598 m -0.900598,0 0.900598,0.900598"
        style="fill:#2ca02c;stroke:#2ca02c;stroke-width:0.22515;stroke-linecap:butt;stroke-linejoin:round" /><path
