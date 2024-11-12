@@ -1,0 +1,8 @@
+cff-version: 1.1.0
+message: >-
+  Snakemake workflow for solving system of Poisson-Nernst-Planck equations on 2d domains with one rough boundary.
+authors:
+- family-names: Hörmann
+  given-names: Johannes Laurin
+orcid: 0000-0001-5867-695X
+title: pnp-on-rough-surfaces       
