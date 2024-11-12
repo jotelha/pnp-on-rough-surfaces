@@ -83,44 +83,6 @@ surface_excess_local_with_gpr:
 unit: um
 
 profiles:
-  rectangle_with_single_rough_edge_after_4N_friction_test:
-    # profile properties
-    file: 1-rough surface after friction test under 4N.csv
-    xscale: 1.0e-6
-    yscale: 1.0e-6
-    skiprows: 1
-    delimiter: ','
-    usecols: [ 0,1 ]
-    unpack: true
-    max_rows: 1010
-  rectangle_with_single_rough_edge_after_10N_friction_test:
-    # profile properties
-    file: 3-rough surface after friction test under 10N.csv
-    xscale: 1.0e-6
-    yscale: 1.0e-6
-    skiprows: 1
-    delimiter: ','
-    usecols: [ 0,1 ]
-    unpack: true
-    max_rows: 1016
-  rectangle_with_single_smooth_edge_after_4N_friction_test:
-    file: 2-smooth surface after friction test under 4N.csv
-    xscale: 1.0e-6
-    yscale: 1.0e-6
-    skiprows: 1
-    delimiter: ','
-    usecols: [ 0,1 ]
-    unpack: true
-    max_rows: 1010
-  rectangle_with_single_smooth_edge_after_10N_friction_test:
-    file: 4-smooth surface after friction test under 10N.csv
-    xscale: 1.0e-6
-    yscale: 1.0e-6
-    skiprows: 1
-    delimiter: ','
-    usecols: [ 0,1 ]
-    unpack: true
-    max_rows: 1016
   rectangle_with_single_rough_edge_parallel:
     # profile properties
     file: Rough surface-3D-10x2-1-line (Parallel sliding direction).csv
