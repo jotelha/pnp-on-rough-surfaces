@@ -1,5 +1,7 @@
 # Poisson-Nernst-Planck equation on rough surfaces
 
+Snakemake workflow for solving system of Poisson-Nernst-Planck equations on 2d domains with one rough boundary.
+
 ## Input
 
 Raw profiles are found within `in/profiles`.
@@ -50,6 +52,19 @@ profiles
 * surface_charge: results from surface charge compuaton
 * surface_integrals: results from integration of variables in z direction
 * volume_integrals: results from integration over whole domain
+
+## Container
+
+To build a container image based on the fenicsx tutorials container that includes additional packages
+necessary to run this workflow, run
+
+    docker build -t imteksim/dolfinx-tutorial-extended -f container/dolfinx-tutorial-extended/Dockerfile .
+
+from within the repository root.
+
+The container runs in the same manner as the tutorial container itself,
+
+    docker run -v $(pwd):/tmp/data --init -ti -p 8888:8888 imteksim/dolfinx-tutorial-extended
 
 ## Installation
 
