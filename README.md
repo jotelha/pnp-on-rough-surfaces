@@ -4,7 +4,7 @@ Snakemake workflow for solving system of Poisson-Nernst-Planck equations on 2d d
 
 This workflow uses
 
-* F. Mölder et al., “Sustainable data analysis with Snakemake,” Apr. 19, 2021, F1000Research: 10:33. doi: 10.12688/f1000research.29032.2.
+* F. Mölder et al., “Sustainable data analysis with Snakemake,” Apr. 19, 2021, F1000Research: 10:33. doi: [10.12688/f1000research.29032.2](https://doi.org/10.12688/f1000research.29032.2).
 
 to stitch together
 
@@ -13,9 +13,8 @@ to stitch together
 * C. Geuzaine and J.-F. Remacle, “Gmsh: A 3-D finite element mesh generator with built-in pre- and post-processing facilities,” International Journal for Numerical Methods in Engineering, vol. 79, no. 11, pp. 1309–1331, 2009, doi: [10.1002/nme.2579](https://doi.org/10.1002/nme.2579).
 * P. Grigorev et al., “matscipy: materials science at the atomic scale with Python,” Journal of Open Source Software, vol. 9, no. 93, p. 5668, Jan. 2024, doi: [10.21105/joss.05668](https://doi.org/10.21105/joss.05668).
 * M. C. Röttger et al., “Contact.engineering—Create, analyze and publish digital surface twins from topography measurements across many scales,” Surf. Topogr.: Metrol. Prop., vol. 10, no. 3, p. 035032, Sep. 2022, doi: [10.1088/2051-672X/ac860a](https://doi.org/10.1088/2051-672X/ac860a).
-* M. van der Wilk, V. Dutordoir, S. John, A. Artemev, V. Adam, and J. Hensman, “A framework for interdomain and multioutput Gaussian processes,” arXiv:2003.01115, 2020, [Online]. Available: https://arxiv.org/abs/2003.01115
 
-in alphabetical order for modeling and analyzing the electrochemical double layer on rough line profiles.
+for modeling and analyzing the electrochemical double layer on rough line profiles.
 
 ## Input
 
@@ -27,7 +26,7 @@ Profile-specific configuration and assignment of unique labels happens within `w
 
 Content of `output directory`:
 
-``
+```
 all.csv  # homogenized global properties of all systems
 figures  # publication-quality figures of global properties
 geometries  # 2d geometries generated from line scan profiles
