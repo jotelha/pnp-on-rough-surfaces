@@ -6,7 +6,6 @@ config = snakemake.config
 logfile = snakemake.log[0]
 
 debye_length = config["debye_length"]
-potential_bias = config["potential_bias"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]

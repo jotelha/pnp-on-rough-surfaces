@@ -96,16 +96,22 @@ charge = mesh.comm.allreduce(charge_local, op=MPI.SUM)
 charge_SI = faraday_constant*I*debye_length**3*charge
 
 amount_of_substance = []
+surface_excess = []
 for i in range(number_of_species):
     amount_of_substance_expression = dolfinx.fem.form(concentration_functions[i]* ufl.dx)
     amount_of_substance_local = dolfinx.fem.assemble_scalar(amount_of_substance_expression)
     amount_of_substance.append(mesh.comm.allreduce(amount_of_substance_local, op=MPI.SUM))
 
+    surface_excess_expression = dolfinx.fem.form((concentration_functions[i] - 1) * ufl.dx)
+    surface_excess_local = dolfinx.fem.assemble_scalar(surface_excess_expression)
+    surface_excess.append(mesh.comm.allreduce(surface_excess_local, op=MPI.SUM))
+
 data = {
             'profile': wildcards.profile,
             'charge': charge,
             'charge_SI': charge_SI,
-            **{f'amount_of_substance_{i}': amount_of_substance[i] for i in range(number_of_species)}
+            **{f'amount_of_substance_{i}': amount_of_substance[i] for i in range(number_of_species)},
+            **{f'surface_excess_{i}': surface_excess[i] for i in range(number_of_species)}
        }
 
 with open(json_file, 'w') as json_file:

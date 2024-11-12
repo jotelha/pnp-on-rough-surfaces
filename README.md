@@ -1,16 +1,30 @@
-# Content
+# Poisson-Nernst-Planck equation on rough surfaces
 
 ## Input
 
 Raw profiles are found within `in/profiles`.
 
-Profile-specific configuration and assignment of unique labels happens within `workflow/confi.yml`.
+Profile-specific configuration and assignment of unique labels happens within `workflow/config.yml`.
 
 ## Output
 
 Content of `output directory`:
 
-The following folders contain polished figures:
+``
+all.csv  # homogenized global properties of all systems
+figures  # publication-quality figures of global properties
+geometries  # 2d geometries generated from line scan profiles
+global_properties_plots  # plots of global properties
+meshes  # meshes generated from geometries
+potential_0.005  # sweep across potential values
+potential_0.01
+...
+potential_0.18
+potential_0.2
+profiles  # homogenized line scan profiles
+```
+
+Within each `potential_*` subfolder, the following folders contain polished figures:
 
 * plot_solution_1d: illustration of 1d double layer
 * plot_solution_2d_global: color maps of potential and concentrations on whole domain
@@ -71,6 +85,36 @@ snakemake --rulegraph | dot -Tsvg > rulegraph.svg
 snakemake --filegraph | dot -Tsvg > filegraph.svg
 ```
 
+## Snakemake interactive notebook editing
+
+To be able to interactively edit a notebook with a command like
+
+```bash
+snakemake --cores 1 --edit-notebook out/figures/surplus_surface_excess_potential_bias.svg --notebook-listen 0.0.0.0:8889
+```
+
+launch the conainer embedding snakemake with additional ports open first, e.g.
+
+```bash
+docker run -v $(pwd):/tmp/data --init -ti -p 8888:8888 -p 8889:8889 imteksim/dolfinx-tutorial-extended
+```
+
+Generate a jupyter configuration with
+
+```console
+# jupyter notebook --generate-config
+Writing default config to: /root/.jupyter/jupyter_notebook_config.py
+```
+
+and append the lines
+
+```bash
+echo "c.ServerApp.allow_root = True" >> /root/.jupyter/jupyter_notebook_config.py
+# echo "c.NotebookApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_notebook_config.py
+```
+
+to the config file.
+
 ## Plot with pyvista
 
 Launch a display server before running snakemake, e.g. with
@@ -90,3 +134,10 @@ export MATPLOTLIBRC="$(pwd)/matplotlibrc"
 ```
 
 before running plotting scripts.
+
+Install Arial with
+
+```bash
+apt update
+apt install ttf-mscorefonts-installer
+```

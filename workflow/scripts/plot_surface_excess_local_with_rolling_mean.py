@@ -16,17 +16,6 @@ import logging
 logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-len_input = len(input)
-logger.info("%d input files", len_input)
-assert len_input == 3*number_of_species + 2
-X_txt_list = input[0:number_of_species]
-predicted_Y_txt_list = input[number_of_species:2*number_of_species]
-predicted_variance_txt_list = input[2*number_of_species:3*number_of_species]
-
-logger.info("X.txt file: %s", X_txt_list)
-logger.info("predicted_Y.txt file: %s", predicted_Y_txt_list)
-logger.info("predicted_variance.txt file: %s", predicted_variance_txt_list)
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -56,31 +45,31 @@ NARROWLY_SCATTERED_DATA_POINTS_MARKER='o'
 
 ci_factor = 2. # confidence interval, 2 ~ 95 %
 
-x_lim = [0, 420]
+x_lim = [170, 350]
 
 try:
-    h_lim = config["profiles"][wildcards.profile]["surface_excess_local_with_gpr"]["hlim"]
+    h_lim = config["profiles"][wildcards.profile]["surface_excess_local"]["hlim"]
 except KeyError:
     logger.warning("No explicit hlim set for %s. Use global setting.", wildcards.profile)
-    h_lim = config["surface_excess_local_with_gpr"]["hlim"]
+    h_lim = config["surface_excess_local"]["hlim"]
 
 try:
-    h_ticks = config["profiles"][wildcards.profile]["surface_excess_local_with_gpr"]["hticks"]
+    h_ticks = config["profiles"][wildcards.profile]["surface_excess_local"]["hticks"]
 except KeyError:
     logger.warning("No explicit hticks set for %s. Use global setting.", wildcards.profile)
-    h_ticks = config["surface_excess_local_with_gpr"]["hticks"]
+    h_ticks = config["surface_excess_local"]["hticks"]
 
 try:
-    y_lims = config["profiles"][wildcards.profile]["surface_excess_local_with_gpr"]["ylims"]
+    y_lims = config["profiles"][wildcards.profile]["surface_excess_local"]["ylims"]
 except KeyError:
     logger.warning("No explicit ylims set for %s. Use global setting.", wildcards.profile)
-    y_lims = config["surface_excess_local_with_gpr"]["ylims"]
+    y_lims = config["surface_excess_local"]["ylims"]
 
 try:
-    y_ticks = config["profiles"][wildcards.profile]["surface_excess_local_with_gpr"]["yticks"]
+    y_ticks = config["profiles"][wildcards.profile]["surface_excess_local"]["yticks"]
 except KeyError:
     logger.warning("No explicit yticks set for %s. Use global setting.", wildcards.profile)
-    y_ticks = config["surface_excess_local_with_gpr"]["yticks"]
+    y_ticks = config["surface_excess_local"]["yticks"]
 
 
 species_labels = ["$\mathrm{H}_3\mathrm{O}^+$", "$\mathrm{OH}^-$"]
@@ -98,6 +87,13 @@ color_l = ['tab:orange', 'tab:blue']
 df = pd.read_csv(csv_file)
 reference_df = pd.read_csv(reference_csv_file)
 
+line_integral_rolling_mean_window = config["line_integral_rolling_mean_window"]
+line_integral_rolling_mean_window_std = config["line_integral_rolling_mean_window_std"]
+
+df_smoothed = df.rolling(window=line_integral_rolling_mean_window,
+                         center=True, on="x", win_type="gaussian").mean(
+    std=line_integral_rolling_mean_window_std)
+
 data = {}
 
 for i in range(number_of_species):
@@ -109,21 +105,20 @@ for i in range(number_of_species):
     original_X = df["x"].values
     original_Y = df[y_value_label].values
 
-    X = np.loadtxt(X_txt_list[i])
-    Y = np.loadtxt(predicted_Y_txt_list[i])
-    variance = np.loadtxt(predicted_variance_txt_list[i])
-    stddev = np.sqrt(variance)
+
+    rolling_mean_X = df_smoothed["x"].values
+    rolling_mean_Y = df_smoothed[y_value_label].values
+
 
     data[i] = {
         'reference_X': reference_X,
         'reference_Y': reference_Y,
+
         'original_X': original_X,
         'original_Y': original_Y,
 
-        'X': X,
-        'Y': Y,
-        'variance': variance,
-        'stddev': stddev,
+        'rolling_mean_X': rolling_mean_X,
+        'rolling_mean_Y': rolling_mean_Y,
     }
 
 fig, ax1 = plt.subplots(1,1, figsize=None)
@@ -155,22 +150,6 @@ p1, = ax1.plot(
     df["x"], df["y"],
     color=color, linestyle="-", linewidth=1, label="roughness profile")
 
-# confidence interval
-# for i in range(number_of_species):
-#     color = color_l[i]
-#
-#     X = data[i]['X']
-#     Y = data[i]['Y']
-#     stddev = data[i]['stddev']
-#
-#     twins[i].fill_between(
-#         X,
-#         (Y-ci_factor*stddev),
-#         (Y+ci_factor*stddev),
-#         alpha=CONFIDENCE_INTERVAL_ALPHA,
-#         label=f'{i}: GPR on surface excess $2\sigma$ confidence interval ',
-#         color=color)
-
 # reference data
 for i in range(number_of_species):
     color = color_l[i]
@@ -178,28 +157,43 @@ for i in range(number_of_species):
     Y = data[i]['reference_Y']
     p, = twins[i].plot(X, Y,
             label=f'{i}: surface excess on flat surface', color=color,
-            linestyle=(0, (1, 2)))
+            linestyle='--', linewidth=2, alpha=DATA_POINTS_ALPHA)
     p_list.append(p)
 
 # mean
+# for i in range(number_of_species):
+#     color = color_l[i]
+#     X = data[i]['original_X']
+#     Y = data[i]['original_Y']
+#     mean_Y = np.mean(Y) * np.ones(Y.shape)
+#     p, = twins[i].plot(X, mean_Y,
+#             label=f'{i}: original data mean', color=color,
+#             linestyle='--', linewidth=1, alpha=DATA_POINTS_ALPHA)
+#     p_list.append(p)
+
+# original data
 for i in range(number_of_species):
     color = color_l[i]
     X = data[i]['original_X']
     Y = data[i]['original_Y']
-    mean_Y = np.mean(Y) * np.ones(Y.shape)
-    p, = twins[i].plot(X, mean_Y,
-            label=f'{i}: original data mean', color=color,
-            linestyle='--')
+    p, = twins[i].plot(X, Y,
+                       label=f'{i}: original data',
+                       color=color,
+                       alpha=DATA_POINTS_ALPHA, linewidth=0.5)
+    # p, = twins[i].plot(X[::2], Y[::2],
+    #         label=f'{i}: original data',
+    #         marker='x', markersize=DATA_POINTS_MARKER_SIZE,
+    #         color=color, linestyle='none', alpha=DATA_POINTS_ALPHA)
     p_list.append(p)
 
-# now GPR models
+# rolling mean
 for i in range(number_of_species):
     color = color_l[i]
-    X = data[i]['X']
-    Y = data[i]['Y']
-    p, = twins[i].plot(X, Y,
-                  label=f'{i}: GPR model for surface excess',
-                  color=color, alpha=1, linewidth=THICK_LINEWIDTH)
+    rolling_mean_X = data[i]['rolling_mean_X']
+    rolling_mean_Y = data[i]['rolling_mean_Y']
+    p, = twins[i].plot(rolling_mean_X, rolling_mean_Y,
+            label=f'{i}: original data rolling mean', color=color,
+            linestyle=(0, (1, 2)))
     p_list.append(p)
 
 ax1.tick_params(axis='y', labelcolor=color)

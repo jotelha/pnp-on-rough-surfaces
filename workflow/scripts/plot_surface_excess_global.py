@@ -47,11 +47,30 @@ ci_factor = 2. # confidence interval, 2 ~ 95 %
 
 x_lim = [0, 420]
 
-h_lim = config["profiles"][wildcards.profile]["surface_excess_global"]["hlim"]
-h_ticks = config["profiles"][wildcards.profile]["surface_excess_global"]["hticks"]
+try:
+    h_lim = config["profiles"][wildcards.profile]["surface_excess_global"]["hlim"]
+except KeyError:
+    logger.warning("No explicit hlim set for %s. Use global setting.", wildcards.profile)
+    h_lim = config["surface_excess_global"]["hlim"]
 
-y_lims = config["profiles"][wildcards.profile]["surface_excess_global"]["ylims"]
-y_ticks = config["profiles"][wildcards.profile]["surface_excess_global"]["yticks"]
+try:
+    h_ticks = config["profiles"][wildcards.profile]["surface_excess_global"]["hticks"]
+except KeyError:
+    logger.warning("No explicit hticks set for %s. Use global setting.", wildcards.profile)
+    h_ticks = config["surface_excess_global"]["hticks"]
+
+try:
+    y_lims = config["profiles"][wildcards.profile]["surface_excess_global"]["ylims"]
+except KeyError:
+    logger.warning("No explicit ylims set for %s. Use global setting.", wildcards.profile)
+    y_lims = config["surface_excess_global"]["ylims"]
+
+try:
+    y_ticks = config["profiles"][wildcards.profile]["surface_excess_global"]["yticks"]
+except KeyError:
+    logger.warning("No explicit yticks set for %s. Use global setting.", wildcards.profile)
+    y_ticks = config["surface_excess_global"]["yticks"]
+
 
 species_labels = ["$\mathrm{H}_3\mathrm{O}^+$", "$\mathrm{OH}^-$"]
 
