@@ -42,30 +42,26 @@ profiles  # homogenized line scan profiles
 
 Within each `potential_*` subfolder, the following folders contain polished figures:
 
-* plot_solution_1d: illustration of 1d double layer
-* plot_solution_2d_global: color maps of potential and concentrations on whole domain
-* plot_solution_2d_local: color maps of potential and concentrations on small subdomain
+* `plot_solution_1d`: illustration of 1d double layer
+* `plot_solution_2d_global`: color maps of potential and concentrations on whole domain
+* `plot_solution_2d_local`: color maps of potential and concentrations on small subdomain
 
-* surface_excess_global_plots: surface excess on whole domain
-* surface_excess_global_with_gpr_plots: surface excess with delocalized trends on whole domain
-* surface_excess_local_plots: surface excess on small subdomain
-* surface_excess_local_with_gpr_plots: surface excess with delocalized trends on small subdomain
+* `surface_excess_global_plots`: surface excess on whole domain
+* `surface_excess_local_plots`: surface excess on small subdomain
 
-* comparative_plots: plots comparing global scalar profile-specific properties
+* `comparative_plots`: plots comparing global scalar profile-specific properties
 
 Other folders contain intermediate or final results.
 
-* checkpoint: immediate, dimensionless solution of PNP system
-* comparative_properties: global scalar profile-specific properties with respect to reference profile
-* derived_properties: global scalar profile-specific properties derived from FEM solution
-* geometries: domain geometries generated from profiles
-* interpolation: dimensionless solution of PNP system interpolated down to 1st order Lagrange elements for visualization
-meshes
-* profile_properties: global scalar profile-specific properties derived from profiles alone
-profiles
-* surface_charge: results from surface charge compuaton
-* surface_integrals: results from integration of variables in z direction
-* volume_integrals: results from integration over whole domain
+* `checkpoint`: immediate, dimensionless solution of PNP system
+* `comparative_properties`: global scalar profile-specific properties with respect to reference profile
+* `derived_properties`: global scalar profile-specific properties derived from FEM solution
+* `geometries`: domain geometries generated from profiles
+* `interpolation`: dimensionless solution of PNP system interpolated down to 1st order Lagrange elements for visualization
+* `profile_properties`: global scalar profile-specific properties derived from profiles alone
+* `surface_charge`: results from surface charge compuaton
+* `surface_integrals`: results from integration of variables in z direction
+* `volume_integrals`: results from integration over whole domain
 
 ## Container
 
