@@ -2,6 +2,22 @@
 
 Snakemake workflow for solving system of Poisson-Nernst-Planck equations on 2d domains with one rough boundary.
 
+This workflow uses
+
+* F. Mölder et al., “Sustainable data analysis with Snakemake,” Apr. 19, 2021, F1000Research: 10:33. doi: 10.12688/f1000research.29032.2.
+
+to stitch together
+
+* I. A. Baratta et al., “DOLFINx: the next generation FEniCS problem solving environment.” 2023. doi: 10.5281/zenodo.10447666.
+* J. S. Dokken, “ADIOS4DOLFINx: A framework for checkpointing in FEniCS,” Journal of Open Source Software, vol. 9, no. 96, p. 6451, Apr. 2024, doi: 10.21105/joss.06451.
+* C. Geuzaine and J.-F. Remacle, “Gmsh: A 3-D finite element mesh generator with built-in pre- and post-processing facilities,” International Journal for Numerical Methods in Engineering, vol. 79, no. 11, pp. 1309–1331, 2009, doi: 10.1002/nme.2579.
+* P. Grigorev et al., “matscipy: materials science at the atomic scale with Python,” Journal of Open Source Software, vol. 9, no. 93, p. 5668, Jan. 2024, doi: 10.21105/joss.05668.
+* J. Hensman, N. Fusi, and N. D. Lawrence, “Gaussian processes for big data,” in Uncertainty in artificial intelligence, Citeseer, 2013, p. 282.
+* M. C. Röttger et al., “Contact.engineering—Create, analyze and publish digital surface twins from topography measurements across many scales,” Surf. Topogr.: Metrol. Prop., vol. 10, no. 3, p. 035032, Sep. 2022, doi: 10.1088/2051-672X/ac860a.
+* M. van der Wilk, V. Dutordoir, S. John, A. Artemev, V. Adam, and J. Hensman, “A framework for interdomain and multioutput Gaussian processes,” arXiv:2003.01115, 2020, [Online]. Available: https://arxiv.org/abs/2003.01115
+
+in alphabetical order for modeling and analyzing the electrochemical double layer on rough line profiles.
+
 ## Input
 
 Raw profiles are found within `in/profiles`.
