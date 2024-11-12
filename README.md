@@ -1,16 +1,30 @@
-# Content
+# Poisson-Nernst-Planck equation on rough surfaces
 
 ## Input
 
 Raw profiles are found within `in/profiles`.
 
-Profile-specific configuration and assignment of unique labels happens within `workflow/confi.yml`.
+Profile-specific configuration and assignment of unique labels happens within `workflow/config.yml`.
 
 ## Output
 
 Content of `output directory`:
 
-The following folders contain polished figures:
+``
+all.csv  # homogenized global properties of all systems
+figures  # publication-quality figures of global properties
+geometries  # 2d geometries generated from line scan profiles
+global_properties_plots  # plots of global properties
+meshes  # meshes generated from geometries
+potential_0.005  # sweep across potential values
+potential_0.01
+...
+potential_0.18
+potential_0.2
+profiles  # homogenized line scan profiles
+```
+
+Within each `potential_*` subfolder, the following folders contain polished figures:
 
 * plot_solution_1d: illustration of 1d double layer
 * plot_solution_2d_global: color maps of potential and concentrations on whole domain
@@ -70,7 +84,6 @@ snakemake --dag | dot -Tsvg > dag_all.svg
 snakemake --rulegraph | dot -Tsvg > rulegraph.svg
 snakemake --filegraph | dot -Tsvg > filegraph.svg
 ```
-
 
 ## Snakemake interactive notebook editing
 
