@@ -1,5 +1,7 @@
 # Poisson-Nernst-Planck equation on rough surfaces
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14108618.svg)](https://doi.org/10.5281/zenodo.14108618)
+
 Snakemake workflow for solving system of Poisson-Nernst-Planck equations on 2d domains with one rough boundary.
 
 This workflow uses
