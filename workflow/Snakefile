@@ -178,6 +178,38 @@ rule extract_surface_integrals_extrema:
     script:
         "scripts/extract_surface_integrals_extrema.py"
 
+rule compute_surface_integrals_histograms:
+    input:
+        input_csv=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
+    output:
+        output_csv=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_histograms.csv",
+    log:
+        f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_compute_histograms.log"
+    script:
+        "scripts/compute_surface_integrals_histograms.py"
+
+rule plot_profiles:
+    input:
+        mesh_msh=f"{out_prefix}/meshes/{{profile}}.msh",
+        json_file=f"{out_prefix}/roughness_properties/{{profile}}.json"
+    output:
+        svg_file=f"{out_prefix}/profiles/{{profile}}.svg",
+        png_file=f"{out_prefix}/profiles/{{profile}}.png"
+    script:
+        "scripts/plot_profiles.py"
+
+rule plot_surface_excess_histograms:
+    input:
+        csv_file=f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_histograms.csv",
+        # reference_csv_file= f"{out_prefix}/potential_{{potential}}/surface_integrals/{reference_profile_label}_integrals.csv",
+    output:
+        svg_file=f"{out_prefix}/potential_{{potential}}/surface_excess_histogram_plots/{{profile}}_surface_excess_histogram.svg",
+        png_file=f"{out_prefix}/potential_{{potential}}/surface_excess_histogram_plots/{{profile}}_surface_excess_histogram.png"
+    log:
+        f"{out_prefix}/potential_{{potential}}/surface_excess_histograms_plots/{{profile}}_plot_surface_excess_histograms.log"
+    script:
+        "scripts/plot_surface_excess_histograms.py"
+
 rule gpr_on_surface_integrals:
     input:
         csv_file = f"{out_prefix}/potential_{{potential}}/surface_integrals/{{profile}}_integrals.csv",
@@ -452,6 +484,19 @@ rule plot_solution_1d:
     script:
         "scripts/plot_solution_1d.py"
 
+rule profiles:
+    input:
+        svg_file=expand(f"{out_prefix}/profiles/{{profile}}.svg", profile=profile_labels)
+
+rule histograms:
+    input:
+        svg_file=expand(f"{out_prefix}/potential_{{potential}}/surface_excess_histogram_plots/{{profile}}_surface_excess_histogram.svg",
+                        profile=profile_labels,potential=potential_bias_values)
+
+rule comparative_plots:
+    input:
+        expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values),
+
 rule figures:
     input:
         csv_file=f"{out_prefix}/all.csv"
@@ -508,6 +553,10 @@ rule all:
         expand(f"{out_prefix}/potential_{{potential}}/comparative_plots", potential=potential_bias_values),
         f"{out_prefix}/all.csv",
         f"{out_prefix}/global_properties_plots",
+
+rule global_properties_plots:
+    input:
+        directory(f"{out_prefix}/global_properties_plots"),
 
 rule default:
     input:

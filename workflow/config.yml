@@ -25,6 +25,9 @@ line_integral_rolling_mean_window_std: 100
 # relative lateral stretch to discard on the left and right boundaries
 relative_lateral_cutoff: 0.02
 
+# number of bins for surface concentration histogram
+histogram_bins: 50
+
 # GPR parameters:
 # length_scale_values: [10, 1]
 # signal_variance_values: [1.e-3, 1.e-2, 0.1, 1]
