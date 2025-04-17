@@ -21,30 +21,16 @@ import numpy as np
 from SurfaceTopography.IO.XYZ import read_csv
 from SurfaceTopography.NonuniformLineScan import NonuniformLineScan
 
-with open(profile_csv, 'r') as f:
-    X_str, Y_str = read_csv(f,
-                            usecols=profile_config["usecols"],
-                            sep=profile_config["delimiter"],
-                            skiprows=profile_config["skiprows"])
-
-# remove invalid values
-x_list = []
-y_list = []
-for i, (x_str, y_str) in enumerate(zip(X_str, Y_str)):
-    try:
-        x = float(x_str)
-        y = float(y_str)
-    except:
-        logger.warning("No valid float on position %d: %s, %s", i, x_str, y_str)
-        continue
-
-    # xy_list.append(np.array([x,y]))
-    x_list.append(x)
-    y_list.append(y)
+x, y = np.loadtxt(profile_csv,
+                          skiprows=profile_config["skiprows"],
+                          delimiter=profile_config["delimiter"],
+                          usecols=profile_config["usecols"],
+                          unpack=profile_config["unpack"],
+                          max_rows=profile_config["max_rows"])
 
 # xy = np.array(xy_list)
-x = np.array(x_list)
-y = np.array(y_list)
+# x = np.array(x_list)
+# y = np.array(y_list)
 
 line_scan = NonuniformLineScan(x, y, unit=config["unit"])
 line_scan_SI = line_scan.to_unit('m')
