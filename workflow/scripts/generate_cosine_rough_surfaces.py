@@ -10,7 +10,7 @@ profile_csv = output.profile_csv
 amplitude = float(wildcards.amplitude)
 frequency = float(wildcards.frequency)
 
-json_file = output.json_file
+# json_file = output.json_file
 
 profile_config = config["profiles"][profile_label]
 
@@ -35,6 +35,8 @@ def create_rough_edge(length, frequency, amplitude, N= 1001):
 x = x_array(2 * (1 / frequency))
 y = create_rough_edge(2 * (1 / frequency), frequency, amplitude)
 
+# to_csv
+# GENERATE DIMENSIONLESS VALUES FOR PROFILES!
 '''from SurfaceTopography.IO.XYZ import read_csv
 from SurfaceTopography.NonuniformLineScan import NonuniformLineScan
 

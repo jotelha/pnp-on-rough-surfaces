@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 import json
 import numpy as np
 
-from SurfaceTopography.IO.XYZ import read_csv
+# from SurfaceTopography.IO.XYZ import read_csv
 from SurfaceTopography.NonuniformLineScan import NonuniformLineScan
 
 x, y = np.loadtxt(profile_csv,
@@ -31,6 +31,9 @@ x, y = np.loadtxt(profile_csv,
 # xy = np.array(xy_list)
 # x = np.array(x_list)
 # y = np.array(y_list)
+
+# WE NEED TO SWITCH TO SI UNITS BEFORE LINE_SCANNING:
+# REASON: WE ARE GENRATING A DIMENIONLSS MESH!
 
 line_scan = NonuniformLineScan(x, y, unit=config["unit"])
 line_scan_SI = line_scan.to_unit('m')
