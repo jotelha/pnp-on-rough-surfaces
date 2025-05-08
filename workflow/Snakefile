@@ -22,21 +22,13 @@ signal_variance_values = config["signal_variance_values"]
 long_length_scale_values = config["long_length_scale_values"]
 long_signal_variance_values = config["long_signal_variance_values"]
 
-rule homogenize:
+rule generate:
     output:
-        profile_csv=f"{out_prefix}/profiles/{{profile}}.csv"
+        profile_csv=f"{out_prefix}/profiles/frequency_{{frequency}}_amplitude_{{amplitude}}.csv"
     log:
-        f"{out_prefix}/profiles/{{profile}}.log"
-    run:
-        import os.path
-        import shutil
-        import logging
-        logging.basicConfig(filename=log[0], encoding='utf-8', level=logging.DEBUG)
-        logger = logging.getLogger(__name__)
-        infile = os.path.join(in_prefix, profile_label_csv_mapping[wildcards.profile])
-
-        shutil.copy(infile, output.profile_csv)
-        logger.info("Copied %s to %s", infile, output.profile_csv)
+        f"{out_prefix}/profiles/frequency_{{frequency}}_amplitude_{{amplitude}}.log"
+    script:
+        "scripts/generate_cosine_rough_surfaces.py"
 
 rule compute_roughness_properties:
     input:
