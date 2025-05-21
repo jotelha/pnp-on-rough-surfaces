@@ -79,7 +79,7 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
         lower_boundary_mesh_size = 0.1*dx
 
     y_mean = np.mean(y)
-    y_zero_aligned = y - y_mean
+    # y_zero_aligned = y - y_mean
     # x_zero_aligned = x - x[0] + dx
     x_zero_aligned = x - x[0]
 
@@ -87,7 +87,7 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     # x1 = x_zero_aligned[-1] + dx
     x1 = x[-1]
 
-    y0 = 0
+    # y0 = 0
     y1 = h
 
     logger.info("y_mean: %g", y_mean)
@@ -101,8 +101,8 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     a0 = dx
     a1 = 1
 
-    L_left = y1 - y_zero_aligned[0]
-    L_right = y1 - y_zero_aligned[-1]
+    L_left = y1 - y[0]
+    L_right = y1 - y[-1]
 
     logger.info("L_left: %g", L_left)
     logger.info("L_right: %g", L_right)
@@ -116,10 +116,10 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     logger.info("n_left: %g", n_left)
     logger.info("n_right: %g", n_right)
 
-    y_increasing = log_space_interval(y_zero_aligned[-1], y1, n_right, a0, a1)
+    y_increasing = log_space_interval(y[-1], y1, n_right, a0, a1)
     mesh_size_increasing = np.geomspace(lower_boundary_mesh_size, upper_boundary_mesh_size, n_right - 1)
 
-    y_decreasing = log_space_interval(y_zero_aligned[0], y1, n_left, a0, a1)
+    y_decreasing = log_space_interval(y[0], y1, n_left, a0, a1)
     mesh_size_decreasing = np.geomspace(lower_boundary_mesh_size, upper_boundary_mesh_size, n_left - 1)
 
     y_decreasing = y_decreasing[::-1]
@@ -131,7 +131,7 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     model.add(name)
     model.setCurrent(name)
 
-    p1 = model.geo.addPoint(x1, y0, 0, meshSize=lower_boundary_mesh_size)
+    p1 = model.geo.addPoint(x1, y[-1], 0, meshSize=lower_boundary_mesh_size)
 
     right_boundary = []
     p_previous = p1
@@ -156,7 +156,7 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     p4 = p_previous
     rough_edge = []
     p_previous = p4
-    for x_next, y_next in zip(x_zero_aligned, y_zero_aligned):
+    for x_next, y_next in zip(x_zero_aligned, y[1:-1]):
         p_next = model.geo.addPoint(x_next, y_next, 0, meshSize=lower_boundary_mesh_size)
         l_next = model.geo.addLine(p_previous, p_next)
         p_previous = p_next
@@ -193,7 +193,11 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
 # y_normalized = y_dimensional * profile_config["yscale"] / debye_length
 
 # expect already normalized profile as input
-x_normalized, y_normalized = np.loadtxt(profile_csv)
+data = np.loadtxt(profile_csv, delimiter=',')
+
+print(data.shape)
+
+x_normalized, y_normalized = data[:,0], data[:,1]
 
 gmsh.initialize()
 gmsh.clear()

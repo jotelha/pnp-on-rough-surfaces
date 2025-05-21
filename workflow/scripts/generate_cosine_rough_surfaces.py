@@ -43,5 +43,6 @@ else:
 # x = x_array(2 * (1 / frequency))
 # y = create_rough_edge(2 * (1 / frequency), frequency, amplitude)
 
+data = np.column_stack((x,y))
 
-np.savetxt(profile_csv, (x,y))
+np.savetxt(profile_csv, data, delimiter=',')

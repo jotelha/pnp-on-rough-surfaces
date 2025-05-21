@@ -47,13 +47,15 @@ debye_length = lambda_D(ionic_strength=I, temperature=temperature, relative_perm
 # y = np.array(y_list)
 
 # expect already normalized profile as input
-x_normalized, y_normalized = np.loadtxt(profile_csv)
+data = np.loadtxt(profile_csv, delimiter=',')
+
+x_normalized, y_normalized = data[:,0], data[:,1]
 
 x = x_normalized*debye_length
 y = y_normalized*debye_length
 
 # WE NEED TO SWITCH TO SI UNITS BEFORE LINE_SCANNING:
-# REASON: WE ARE GENRATING A DIMENIONLSS MESH!
+# REASON: WE ARE GENERATING A DIMENIONLSS MESH!
 
 line_scan = NonuniformLineScan(x, y, unit=config["unit"])
 line_scan_SI = line_scan.to_unit('m')
