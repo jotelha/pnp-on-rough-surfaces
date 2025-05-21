@@ -5,7 +5,6 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-debye_length = config["debye_length"]
 height_normalized = config["height_normalized"]
 
 lower_boundary_mesh_size = config["lower_boundary_mesh_size"]
@@ -14,7 +13,7 @@ upper_boundary_mesh_size = config["upper_boundary_mesh_size"]
 profile_csv = input.profile_csv
 profile_label = wildcards.profile
 
-profile_config = config["profiles"][profile_label]
+# profile_config = config["profiles"][profile_label]
 
 import numpy as np
 import scipy as scp
@@ -81,10 +80,12 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
 
     y_mean = np.mean(y)
     y_zero_aligned = y - y_mean
-    x_zero_aligned = x - x[0] + dx
+    # x_zero_aligned = x - x[0] + dx
+    x_zero_aligned = x - x[0]
 
     x0 = 0
-    x1 = x_zero_aligned[-1] + dx
+    # x1 = x_zero_aligned[-1] + dx
+    x1 = x[-1]
 
     y0 = 0
     y1 = h
@@ -181,15 +182,18 @@ def gmsh_rectangle_with_single_rough_edge(model: gmsh.model, name: str, x, y, h=
     return model
 
 
-x_dimensional, y_dimensional = np.loadtxt(profile_csv,
-                          skiprows=profile_config["skiprows"],
-                          delimiter=profile_config["delimiter"],
-                          usecols=profile_config["usecols"],
-                          unpack=profile_config["unpack"],
-                          max_rows=profile_config["max_rows"])
+# x_dimensional, y_dimensional = np.loadtxt(profile_csv,
+#                           skiprows=profile_config["skiprows"],
+#                           delimiter=profile_config["delimiter"],
+#                           usecols=profile_config["usecols"],
+#                           unpack=profile_config["unpack"],
+#                           max_rows=profile_config["max_rows"])
+#
+# x_normalized = x_dimensional * profile_config["xscale"] / debye_length
+# y_normalized = y_dimensional * profile_config["yscale"] / debye_length
 
-x_normalized = x_dimensional * profile_config["xscale"] / debye_length
-y_normalized = y_dimensional * profile_config["yscale"] / debye_length
+# expect already normalized profile as input
+x_normalized, y_normalized = np.loadtxt(profile_csv)
 
 gmsh.initialize()
 gmsh.clear()

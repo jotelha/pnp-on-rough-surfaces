@@ -5,7 +5,6 @@ params = snakemake.params
 config = snakemake.config
 logfile = snakemake.log[0]
 
-debye_length = config["debye_length"]
 reference_concentrations = config["reference_concentrations"]
 number_charges = config["number_charges"]
 number_of_species = config["number_of_species"]

@@ -10,7 +10,7 @@ reference_concentrations: [1.0e-4, 1.0e-4]  #mM
 number_charges: [1, -1]
 # potential_bias: 0.1 # V
 
-debye_length: 9.650417803483358e-07 # m
+# debye_length: 9.650417803483358e-07 # m
 
 temperature: 298.15  # K
 relative_permittivity: 79  # water
@@ -41,7 +41,7 @@ long_length_scale_values: [50]
 long_signal_variance_values: [1]
 
 # best combination: 10, 0.01, 50, 0.01
-reference_profile_label: rectangle_flat_from_vertical
+reference_profile_label: frequency_0_amplitude_0
 
 # surface excess plotting configurations
 surface_excess_global:
@@ -86,6 +86,16 @@ surface_excess_local_with_gpr:
     -
 
 unit: um
+
+rectangle_flat_from_vertical:
+  file: rectangle_flat_from_vertical.csv
+  xscale: 1.0e-6
+  yscale: 1.0e-6
+  skiprows: 1
+  delimiter: ','
+  usecols: [ 0,1 ]
+  unpack: true
+  max_rows: 1007
 
 profiles:
   rectangle_with_single_rough_edge_parallel:

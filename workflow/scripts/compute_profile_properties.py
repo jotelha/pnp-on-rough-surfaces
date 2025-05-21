@@ -42,18 +42,21 @@ thermal_voltage = gas_constant * temperature / faraday_constant
 
 potential_bias = potential_bias_SI / thermal_voltage
 
-x_input, y_input = np.loadtxt(profile_csv,
-                          skiprows=profile_config["skiprows"],
-                          delimiter=profile_config["delimiter"],
-                          usecols=profile_config["usecols"],
-                          unpack=profile_config["unpack"],
-                          max_rows=profile_config["max_rows"])
+# x_input, y_input = np.loadtxt(profile_csv,
+#                           skiprows=profile_config["skiprows"],
+#                           delimiter=profile_config["delimiter"],
+#                           usecols=profile_config["usecols"],
+#                           unpack=profile_config["unpack"],
+#                           max_rows=profile_config["max_rows"])
+#
+# x_dimensional = x_input
+# y_dimensional = y_input
+#
+# x_normalized = x_dimensional * profile_config["xscale"] / debye_length_SI
+# y_normalized = y_dimensional * profile_config["yscale"] / debye_length_SI
 
-x_dimensional = x_input
-y_dimensional = y_input
-
-x_normalized = x_dimensional * profile_config["xscale"] / debye_length_SI
-y_normalized = y_dimensional * profile_config["yscale"] / debye_length_SI
+# expect already normalized profile as input
+x_normalized, y_normalized = np.loadtxt(profile_csv)
 
 dx = np.mean(x_normalized[1:]-x_normalized[:-1])
 
